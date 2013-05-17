@@ -1,45 +1,55 @@
 
 
 BOOK_CONTENT = [
-  "Introduction",
-  "Chapter1"
+  "Intro",
+  "chapter1"
 ]
-
 
 # define a function that extracts the TOC
 # just pasrse the files and collect whatever
 # starts with # (any number of them) and collect 
 # the links.
+require 'rake/clean'
 
+OBJDIR = 'build'
+SRCDIR = 'content'
 
+RMD_FILES      = FileList['content/*.Rmd']
+MARKDOWN_FILES = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('md')) }
+HTML_FILES     = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('html')) }
 
+# CLEAN.include(MARKDOWN_FILES)
+# CLEAN.include(HTML_FILES)
+# CLEAN.include("build/book.pdf")
+CLEAN.include(OBJDIR)
 
-task :default do
+# task that processes all Rmd files
+task :makeMarkdownFiles     => MARKDOWN_FILES
+task :makeHtmlFiles         => HTML_FILES
 
-  #for chapter in BOOK_CONTENT
-  #  puts "This is a chapter #{chapter}"
-  #end
-  system "cp content/Intro.md build"
+# making sure build folder exists
+directory OBJDIR
 
-  system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../content/chapter1.Rmd');\""
-  system "cd build; pandoc --mathjax -s chapter1.md  -t html -o book1.html"
-  system "cd build; pandoc --mathjax -s chapter1.md  -t html -o book1.html"
-
-
-  #system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../content/chapter2.Rrst');\""
-  #system "cd build; pandoc --mathjax -s chapter2.rst -t html -o book2.html"
+# rule to build Rmd files
+rule '.md' => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('Rmd')) },'%d'] do |t|
+    system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../#{t.source}');\""
 end
 
-task :pdf do
+# rule to copy markdown files
+rule /build.*.md/ => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('md')) },'%d'] do |t|
+    system "cp #{t.source} #{t.name}"
+end
+
+# rule to copy markdown files
+rule '.html' => '.md' do |t|
+  system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
+end
+
+task :default => [:pdf] 
+
+task :pdf => [:makeMarkdownFiles]  do
   system "cd build; pandoc --chapters --toc -s *.md -t latex -o book.pdf"
 end
 
-task :html do
-# good options
-# --id-prefix=   to add a prefix to all links in a file
-
-  system "cd build; pandoc --mathjax -s Intro.md -t html -o Intro.html"
-  system "cd build; pandoc --mathjax -s chapter1.md -t html -o chapter1.html"
-end
-
+task :html => [:makeHtmlFiles] 
 
