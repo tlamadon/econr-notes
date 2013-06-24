@@ -6,48 +6,19 @@ A data.table is a collection of vectors of identical length. Each vector forms a
 
 So we can easily create such an object:
 
-
-```r
+```{r}
 require(data.table)
-```
-
-```
-## Loading required package: data.table
-```
-
-```r
-v1 = seq(0, 1, l = 10)
-v2 = sample(c("a", "b", "c"), 10, replace = TRUE)
-dd = data.table(i = v1, l = v2)
+v1 = seq(0,1,l=10)
+v2 = sample(c('a','b','c'),10,replace=TRUE)
+dd = data.table(i = v1,  l = v2)
 dd
 ```
 
-```
-##          i l
-##  1: 0.0000 c
-##  2: 0.1111 c
-##  3: 0.2222 a
-##  4: 0.3333 c
-##  5: 0.4444 b
-##  6: 0.5556 c
-##  7: 0.6667 b
-##  8: 0.7778 b
-##  9: 0.8889 b
-## 10: 1.0000 b
-```
-
-
 Then columns can be accessed by names using the dollar sign.
 
-
-```r
+```{r}
 dd$i
 ```
-
-```
-##  [1] 0.0000 0.1111 0.2222 0.3333 0.4444 0.5556 0.6667 0.7778 0.8889 1.0000
-```
-
 
 ## The 3 arguments of `[` in data.table
 
@@ -65,29 +36,51 @@ $$latex
 $$
 
 Let's first generate the data in a very crude and slow way.
-
-```r
-p = list(n = 20, t = 10, rho = 0.8, f_sd = 0.2, y0_sd = 1, u_sd = 1)
+```{r}
+p = list(n=20,t=10,rho=0.8,f_sd=0.2,y0_sd=1,u_sd=1)
 
 # create 1 entry per individual and draw a random length
-dd = data.table(i = 1:p$n, l = rpois(p$n, p$t), y0 = rnorm(p$n, sd = p$y0_sd), 
-    f = exp(rnorm(p$n, sd = p$y0_sd)))
+dd = data.table(i=1:p$n,l=rpois(p$n,p$t),y0=rnorm(p$n,sd=p$y0_sd),f=exp(rnorm(p$n,sd=p$y0_sd)))
 
 # for each individual we create the time series
-dd = dd[, {
-    y = rep(0, l)
-    y[1] = y0
-    u = rnorm(l, sd = p$u_sd)
-    for (t in 2:l) {
-        y[t] = p$rho * y[t - 1] + f
-    }
-    list(y = y, t = 1:l)
-}, i]
-```
+dd = dd[,{ 
+  y = rep(0,l)
+  y[1] = y0
+  u    = rnorm(l,sd=p$u_sd)
+  for (t in 2:l) {
+    y[t] = p$rho * y[t-1] + f
+  }
+  list(y=y,t=1:l)
+},i]
 
+```
 
 we plot for a few indidividuals:
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+```{r,results=FALSE,echo=FALSE,message=FALSE}
+require(ggplot2)
+ggplot(dd,aes(x=t,y=y,group=i)) + geom_line()
+```
+
+### computing panel first differences using data.table
+
+Now that we have our data set we can create the first difference to remove the fixed effect. To do so we are going to use the `keys` of data.table.
+
+We first define the keys for the table. The keys should uniquely identify a row in the data. In our case (i,t) is enough. 
+
+```{r}
+setkey(dd,i,t)
+```
+
+Next we can use the `J` function from the package to create the lag `y`
+
+```{r}
+dd$y.l1 = dd[J(i,t-1),y]$y
+dd
+```
+
+The `J` function creates a data.table with the 2 columsn `i,j` coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use `-1` to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. 
+An important feature
+
 
 
