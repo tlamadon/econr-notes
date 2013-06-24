@@ -2,7 +2,8 @@
 
 BOOK_CONTENT = [
   "Intro",
-  "chapter1"
+  "chapter1",
+  "DataTable"
 ]
 
 # define a function that extracts the TOC
