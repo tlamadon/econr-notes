@@ -23,6 +23,7 @@ modify the `config.site` and add:
     CFLAGS="-g -O3 -wd188 -ip -mp"
     F77=ifort
     FLAGS="-g -O3 -mp"
+    FFLAGS="-g -O3 -mp"
     CXX=icpc
     CXXFLAGS="-g -O3 -mp"
     FC=ifort
@@ -37,7 +38,7 @@ modify the `config.site` and add:
 
 then run 
 
-    ./configure --enable-R-shlib --enable-threads=posix --with-lapack --with-blas="-fopenmp -m64 -I$MKLROOT/include -L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lpthread -lm"
+    ./configure --enable-R-shlib --enable-threads=posix --with-lapack --with-blas="-fopenmp -m64 -I$MKLROOT/include -L$MKLROOT/lib/intel64 -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lpthread -lm" --with-x=no
     make
     make install
 
