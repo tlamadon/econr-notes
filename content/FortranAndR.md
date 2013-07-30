@@ -67,6 +67,12 @@ matmult <- function(A,X) {
 ```
 and we are done!
 
+## Tricks to remember
+
+ - you need to wrap integer with `as.integer` or they will be set to `0`
+ - sometimes the routine will be renamed, you can list the internal names using `nm -g` in the terminal
+ - it is painful, but constraint yourself to using `implicit none`
+
 ## links
 
  - [howto on returning an array](http://math.acadiau.ca/ACMMaC/howtos/Fortran_R.html)
