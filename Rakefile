@@ -3,7 +3,9 @@
 BOOK_CONTENT = [
   "Intro",
   "chapter1",
-  "DataTable"
+  "DataTable",
+  "savingRcppGSL",
+  "FortranAndR"
 ]
 
 # define a function that extracts the TOC
@@ -11,6 +13,7 @@ BOOK_CONTENT = [
 # starts with # (any number of them) and collect 
 # the links.
 require 'rake/clean'
+require 'mustache'
 
 OBJDIR = 'build'
 SRCDIR = 'content'
@@ -43,7 +46,14 @@ end
 
 # rule to copy markdown files
 rule '.html' => '.md' do |t|
-  system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
+  #system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
+  system "pandoc --mathjax -s #{t.source}" +
+         " -t html -o #{t.name} " +
+         " --template ~/git/pandoc-bootstrap-template/template.html " +
+         " --css ~/git/pandoc-bootstrap-template/template.css " +
+         " --toc " +
+         " --toc-depth 2 " +
+         " --data-dir=./" 
 end
 
 task :default => [:pdf] 
@@ -53,4 +63,18 @@ task :pdf => [:makeMarkdownFiles]  do
 end
 
 task :html => [:makeHtmlFiles] 
+
+task :serve do
+  system "ruby -run -e httpd -- -p 5000 ./build"
+end
+
+task :prepare do
+
+  Mustache.template_file = 'templates/html-bootstrap/template.mustache.html'
+  view = Mustache.new
+
+  view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
+
+  puts view.render
+end
 

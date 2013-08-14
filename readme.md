@@ -23,3 +23,10 @@ Use one sharp sign for chapter titles and then add more for sections / subsectio
 
 This will allow us to split documents hwoever we want at writing and at rendering.
 
+## Using
+
+ - mustache
+ - rake
+ - pandoc
+ - mathjax
+ - bootstrap
