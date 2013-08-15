@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bootstrap, from Twitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="/bootstrap/ico/favicon.png">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Econ Notes</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="DataTable.html">DataTable</a></li>
+                          <li><a href="savingRcppGSL.html">savingRcppGSL</a></li>
+                      </ul>
+                  </li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">topic 1</li>
+              <li><a href="#">Link</a></li>
+              <li class="nav-header">topic 2</li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+            <h1 id="solving-a-simple-2-period-consumption-problem-with-rcppgsl">Solving a simple 2-period Consumption problem with RcppGSL</h1>
+<p>In this example we demonstrate how to solve the following problem using the RcppGSL package. GSL is the <a href="https://www.gnu.org/software/gsl/">[GNU scientific library]</a> and has many useful functions written in C++. RcppGSL is the Rcpp interface for R. Please look at the separate chapter &quot;how to install RcppGSL&quot; as that needs a trick or two.</p>
+<h2 id="problem">problem</h2>
+<p><br /><span class="math">$ \begin{array}{ccc} max_x &amp;\log(a - x) + \beta log(x) \\
+                           &amp;x \in [0.1,11],\\
+                           &amp;a \in {2,3,\dots,10}
+                     \end{array}$</span><br /></p>
+<p>This is the simplest problem one could try to solve. to add at least some realism, we will linearly interpolate the &quot;future value&quot; $ log(x) $, as our problems most of the times do not admit a closed form of this object.</p>
+<h3 id="solution">Solution</h3>
+<p>The good thing is that there is an analytic solution to this. Taking the derivative w.r.t. x one obtains</p>
+<p><br /><span class="math">$ \begin{array}{cccc} \frac{1}{a-x}        &amp;=&amp; \beta \frac{1}{x} \\
+                     \beta (a-x)           &amp;=&amp; x \\
+                     \beta a               &amp;=&amp; x (1+\beta) \\
+                     a\frac{\beta}{1+\beta} &amp;=&amp; x 
+                     \end{array} $</span><br /></p>
+<p>which implies that savings <span class="math"><em>x</em></span> are a constant fraction of current assets.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(RcppGSL)</code></pre>
+<pre><code>## Loading required package: Rcpp</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(inline)</code></pre>
+<pre><code>## Loading required package: methods</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">
+<span class="co"># there is some weird thing going on with assets here.  it seems the</span>
+<span class="co"># C-function modifies the values of the assets object in R now idea why</span>
+<span class="co"># that happens. create a second object assets2 just to be sure.</span>
+
+<span class="co"># define asset and savings grid</span>
+assets &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">2</span>, <span class="dv">10</span>, <span class="dt">le =</span> <span class="dv">9</span>)
+assets2 &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">2</span>, <span class="dv">10</span>, <span class="dt">le =</span> <span class="dv">9</span>)
+saving &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="fl">0.1</span>, <span class="dv">11</span>, <span class="dt">le =</span> <span class="dv">50</span>)
+
+Beta &lt;-<span class="st"> </span><span class="fl">0.95</span>
+verbose &lt;-<span class="st"> </span><span class="ot">FALSE</span>  <span class="co"># set FALSE to supress printing the trace of the optimizer</span></code></pre>
+<h3 id="rcpp-inline">Rcpp Inline</h3>
+<p>We will use the inline package to write C source code inline. Then we compile the source in place to a C function, and we call it from R. See chapter &quot;intro to Rcpp&quot;.</p>
+<p>First, define a string &quot;inc&quot; to be our personal header file for the C function:</p>
+<pre class="sourceCode r"><code class="sourceCode r">inc &lt;-<span class="st"> &#39;</span>
+<span class="st">#include &lt;gsl/gsl_min.h&gt;</span>
+<span class="st">#include &lt;gsl/gsl_interp.h&gt;</span>
+
+<span class="st">// this struct will hold parameters we need in the objective</span>
+<span class="st">// those contain also the approximation object &quot;myint&quot; and </span>
+<span class="st">// corresponding accelerator acc</span>
+<span class="st">struct my_f_params { double a; double beta; const gsl_interp *myint; gsl_interp_accel *acc; NumericVector xx;NumericVector y;};</span>
+
+<span class="st">// note that we want to MAXIMIZE value, but the algorithm</span>
+<span class="st">// minimizes a function. we multiply return values with -1 to fix that.</span>
+
+<span class="st">double my_obj( double x, void *p){</span>
+<span class="st">  struct my_f_params *params = (struct my_f_params *)p;</span>
+<span class="st">    double a                   = (params-&gt;a);</span>
+<span class="st">    double beta                = (params-&gt;beta);</span>
+<span class="st">    const gsl_interp *myint    = (params-&gt;myint);</span>
+<span class="st">    gsl_interp_accel *acc      = (params-&gt;acc);</span>
+<span class="st">    NumericVector xx           = (params-&gt;xx);</span>
+<span class="st">    NumericVector y            = (params-&gt;y);</span>
+<span class="st">        </span>
+<span class="st">    double res, out, ev;</span>
+
+<span class="st">    // obtain interpolated value</span>
+
+<span class="st">    ev = gsl_interp_eval(myint, xx.begin(), y.begin(), x,acc);</span>
+
+<span class="st">    res = a - x;    //current resources</span>
+
+<span class="st">  // if consumption negative, very large value</span>
+<span class="st">    if (res&lt;0) {</span>
+<span class="st">        out =  1e9;</span>
+<span class="st">    } else {</span>
+<span class="st">        out = - (log(res) + beta*ev);</span>
+<span class="st">    }</span>
+<span class="st">    return out;</span>
+<span class="st">}</span>
+<span class="st">&#39;</span></code></pre>
+<h3 id="testing-the-objective-function">testing the objective function</h3>
+<p>here's a code snippet that will print the value of the ojbective at different asset and savings states:</p>
+<pre class="sourceCode r"><code class="sourceCode r">src &lt;-<span class="st"> &#39;</span>
+<span class="st">NumericVector a(a_);</span>
+<span class="st">NumericVector aa(aa_);</span>
+<span class="st">double beta  = as&lt;double&gt;(beta_);</span>
+<span class="st">NumericVector ay = log(aa);  // future values</span>
+
+<span class="st">int m = aa.length();</span>
+<span class="st">int n = a.length();</span>
+
+<span class="st">NumericMatrix R(n,m);</span>
+
+<span class="st">gsl_interp_accel *accP = gsl_interp_accel_alloc() ;</span>
+<span class="st">gsl_interp *linP = gsl_interp_alloc( gsl_interp_linear , m );</span>
+<span class="st">gsl_interp_init( linP, aa.begin(), ay.begin(), m );</span>
+
+<span class="st">gsl_function F;</span>
+
+<span class="st">F.function = &amp;my_obj;</span>
+
+<span class="st">for (int i=0;i &lt; a.length(); i++){</span>
+<span class="st">  // define the struct on that state</span>
+<span class="st">    struct my_f_params params = {a(i),beta,linP,accP,aa,ay};</span>
+<span class="st">    F.params   = &amp;params;</span>
+<span class="st">    //Rcout &lt;&lt; &quot;asset state :&quot; &lt;&lt; i &lt;&lt; std::endl;</span>
+<span class="st">    //Rcout &lt;&lt; &quot;asset value :&quot; &lt;&lt; a(i) &lt;&lt; std::endl;</span>
+<span class="st">    for (int j=0; j &lt; m; j++) {</span>
+<span class="st">        //Rcout &lt;&lt; &quot;saving value :&quot; &lt;&lt; aa(j) &lt;&lt; std::endl;</span>
+<span class="st">        //Rcout &lt;&lt; GSL_FN_EVAL(&amp;F,aa(j)) &lt;&lt; std::endl;</span>
+<span class="st">    R(i,j) = GSL_FN_EVAL(&amp;F,aa(j));</span>
+<span class="st">    }</span>
+<span class="st">    </span>
+<span class="st">}</span>
+<span class="st">return wrap(R);</span>
+<span class="st">&#39;</span>
+
+<span class="co"># here we compile the c function:</span>
+testf=<span class="kw">cxxfunction</span>(<span class="kw">signature</span>(<span class="dt">a_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">aa_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">beta_=</span><span class="st">&quot;numeric&quot;</span>),<span class="dt">body=</span>src,<span class="dt">plugin=</span><span class="st">&quot;RcppGSL&quot;</span>,<span class="dt">includes=</span>inc)
+
+<span class="co"># here we call it</span>
+res1 &lt;-<span class="st"> </span><span class="kw">testf</span>(<span class="dt">a_=</span>assets,<span class="dt">aa_=</span>saving,<span class="dt">beta_=</span>Beta)
+tmp =<span class="st"> </span>res1  
+tmp[tmp==<span class="fl">1e9</span>] =<span class="st"> </span><span class="ot">NA</span>  <span class="co"># the value 1e9 stands for &quot;not feasible&quot;</span>
+<span class="kw">persp</span>(tmp,<span class="dt">theta=</span><span class="dv">100</span>,<span class="dt">main=</span><span class="st">&quot;objective function&quot;</span>,<span class="dt">ticktype=</span><span class="st">&quot;detailed&quot;</span>,<span class="dt">x=</span>assets,<span class="dt">y=</span>saving,<span class="dt">zlab=</span><span class="st">&quot;objective function value&quot;</span>)</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-3.png" alt="plot of chunk unnamed-chunk-3" /><p class="caption">plot of chunk unnamed-chunk-3</p>
+</div>
+<h3 id="setup-the-optimizer">Setup the optimizer</h3>
+<p>this is a bit messy. needs much more commenting:</p>
+<pre class="sourceCode r"><code class="sourceCode r">src2 &lt;-<span class="st"> &#39;</span>
+<span class="st">// map values from R</span>
+<span class="st">NumericVector a(a_);</span>
+<span class="st">NumericVector aa(aa_);</span>
+<span class="st">double beta = as&lt;double&gt;(beta_);</span>
+<span class="st">bool verbose = as&lt;bool&gt;(verbose_);</span>
+<span class="st">NumericVector ay = log(aa);  // future values</span>
+<span class="st">NumericVector R(a_);</span>
+
+<span class="st">// optimizer setup</span>
+<span class="st">int status;</span>
+<span class="st">int iter=0,max_iter=100;</span>
+<span class="st">const gsl_min_fminimizer_type *T;</span>
+<span class="st">gsl_min_fminimizer *s;</span>
+
+<span class="st">int k = aa.length();</span>
+
+<span class="st">gsl_interp_accel *accP = gsl_interp_accel_alloc() ;</span>
+<span class="st">gsl_interp *linP       = gsl_interp_alloc( gsl_interp_linear , k );</span>
+<span class="st">gsl_interp_init( linP, aa.begin(), ay.begin(), k );</span>
+
+<span class="st">// parameter struct</span>
+<span class="st">struct my_f_params params = {a(0),beta,linP,accP,aa,ay};</span>
+
+<span class="st">// gsl objective function</span>
+<span class="st">gsl_function F;</span>
+<span class="st">F.function = &amp;my_obj;</span>
+<span class="st">F.params   = &amp;params;</span>
+
+<span class="st">// bounds on choice variable</span>
+<span class="st">double low = aa(0), up=aa(k-1);</span>
+<span class="st">double m = 0.2; //current minium</span>
+
+<span class="st">// create an fminimizer object of type &quot;brent&quot;</span>
+<span class="st">T = gsl_min_fminimizer_brent;</span>
+<span class="st">s = gsl_min_fminimizer_alloc(T);</span>
+
+<span class="st">printf(&quot;using %s method</span><span class="ch">\\</span><span class="st">n&quot;, </span>
+<span class="st">       gsl_min_fminimizer_name(s));</span>
+
+<span class="st">for (int i=0;i &lt; a.length(); i++){</span>
+
+<span class="st">    // load current grid values into struct</span>
+<span class="st">    // if interpolation schemes depend on current state</span>
+<span class="st">    // i, need to allocate linP(i) here and then load into</span>
+<span class="st">    // params</span>
+
+<span class="st">    struct my_f_params params = {a(i),beta,linP,accP,aa,ay};</span>
+<span class="st">    F.params   = &amp;params;</span>
+
+<span class="st">    // if optimization bounds change do that here</span>
+
+<span class="st">    low = aa(0); </span>
+<span class="st">    up=aa(k-1);</span>
+<span class="st">    iter=0; // reset iterator for each state</span>
+<span class="st">    m = 0.2; // reset minimum for each state</span>
+
+<span class="st">    // set minimzer on current obj function</span>
+<span class="st">    gsl_min_fminimizer_set( s, &amp;F, m, low, up );</span>
+
+<span class="st">    // print results</span>
+<span class="st">    if (verbose){</span>
+<span class="st">    printf (&quot; iter lower      upper      minimum      int.length</span><span class="ch">\\</span><span class="st">n&quot;);</span>
+<span class="st">            printf (&quot;%5d [%.7f, %.7f] %.7f %.7f</span><span class="ch">\\</span><span class="st">n&quot;,</span>
+<span class="st">            iter, low, up,m, up - low);</span>
+<span class="st">    }</span>
+<span class="st">    </span>
+<span class="st">    // optimization loop</span>
+<span class="st">    do {</span>
+<span class="st">        iter++;</span>
+<span class="st">        status = gsl_min_fminimizer_iterate(s);</span>
+<span class="st">        m      = gsl_min_fminimizer_x_minimum(s);</span>
+<span class="st">        low    = gsl_min_fminimizer_x_lower(s);</span>
+<span class="st">        up     = gsl_min_fminimizer_x_upper(s);</span>
+
+<span class="st">        status = gsl_min_test_interval(low,up,0.001,0.0);</span>
+
+<span class="st">        if (status == GSL_SUCCESS &amp;&amp; verbose){</span>
+<span class="st">            Rprintf(&quot;Converged:</span><span class="ch">\\</span><span class="st">n&quot;);</span>
+<span class="st">        }</span>
+<span class="st">        if (verbose){</span>
+<span class="st">        printf (&quot;%5d [%.7f, %.7f] %.7f %.7f</span><span class="ch">\\</span><span class="st">n&quot;,</span>
+<span class="st">                iter, low, up,m, up - low);</span>
+<span class="st">        }</span>
+<span class="st">    } </span>
+<span class="st">    while (status == GSL_CONTINUE &amp;&amp; iter &lt; max_iter);</span>
+<span class="st">    R(i) = m;</span>
+<span class="st">}</span>
+<span class="st">gsl_min_fminimizer_free(s);</span>
+<span class="st">return wrap(R);</span>
+<span class="st">&#39;</span></code></pre>
+<h4 id="compiling-the-c-function">compiling the C function</h4>
+<pre class="sourceCode r"><code class="sourceCode r">f2=<span class="kw">cxxfunction</span>(<span class="kw">signature</span>(<span class="dt">a_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">aa_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">beta_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">verbose_=</span><span class="st">&quot;logical&quot;</span>),<span class="dt">body=</span>src2,<span class="dt">plugin=</span><span class="st">&quot;RcppGSL&quot;</span>,<span class="dt">includes=</span>inc)
+
+<span class="co"># setup a wrapper to call. optional</span>
+myfun &lt;-<span class="st"> </span>function(ass,sav,Beta,verbose){
+  res &lt;-<span class="st"> </span><span class="kw">f2</span>(ass,sav,Beta,verbose)
+    <span class="kw">return</span>(res)
+}
+
+myres &lt;-<span class="st"> </span><span class="kw">myfun</span>(assets,saving,Beta,verbose)</code></pre>
+<h4 id="look-at-result">look at result</h4>
+<p>we can compare the analytical solution to the one we found by just plotting the optimal savings choices:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(assets2, assets2 *<span class="st"> </span>Beta/(<span class="dv">1</span> +<span class="st"> </span>Beta), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>)
+<span class="kw">lines</span>(assets2, myres)
+<span class="kw">legend</span>(<span class="st">&quot;bottomright&quot;</span>, <span class="dt">legend =</span> <span class="kw">c</span>(<span class="st">&quot;true&quot;</span>, <span class="st">&quot;approx&quot;</span>), <span class="dt">lty =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="dt">col =</span> <span class="kw">c</span>(<span class="st">&quot;red&quot;</span>, 
+    <span class="st">&quot;black&quot;</span>))</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-6.png" alt="plot of chunk unnamed-chunk-6" /><p class="caption">plot of chunk unnamed-chunk-6</p>
+</div>
+<h5 id="how-far-is-our-solution-from-the-closed-form">How far is our solution from the closed form?</h5>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">max</span>(assets2 *<span class="st"> </span>Beta/(<span class="dv">1</span> +<span class="st"> </span>Beta) -<span class="st"> </span>myres))</code></pre>
+<pre><code>## [1] 0.05496</code></pre>
+
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>Thibaut Lamadon and Florian Oswald</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/bootstrap/js/jquery.js"></script>
+    <script src="/bootstrap/js/bootstrap-transition.js"></script>
+    <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="/bootstrap/js/bootstrap-popover.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="/bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="/bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bootstrap, from Twitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="/bootstrap/ico/favicon.png">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Econ Notes</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="DataTable.html">DataTable</a></li>
+                          <li><a href="savingRcppGSL.html">savingRcppGSL</a></li>
+                      </ul>
+                  </li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">topic 1</li>
+              <li><a href="#">Link</a></li>
+              <li class="nav-header">topic 2</li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+            <p>This section will described how to use the <code>data.table</code> package. This package is a much faster implementation of the <code>data.frame</code> object which it also extends.</p>
+<h2 id="the-structure-of-data.table">The structure of data.table</h2>
+<p>A data.table is a collection of vectors of identical length. Each vector forms a column, and so the data.frame can be thought of as a table with a number of row and a number of columns. Those structures are often called <code>rogue arrays</code> (an non rogue array has a same type in every column).</p>
+<p>So we can easily create such an object:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(data.table)</code></pre>
+<pre><code>## Loading required package: data.table</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">v1 =<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dt">l =</span> <span class="dv">10</span>)
+v2 =<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>), <span class="dv">10</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>)
+dd =<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">i =</span> v1, <span class="dt">l =</span> v2)
+dd</code></pre>
+<pre><code>##          i l
+##  1: 0.0000 c
+##  2: 0.1111 b
+##  3: 0.2222 c
+##  4: 0.3333 c
+##  5: 0.4444 b
+##  6: 0.5556 b
+##  7: 0.6667 a
+##  8: 0.7778 b
+##  9: 0.8889 b
+## 10: 1.0000 c</code></pre>
+<p>Then columns can be accessed by names using the dollar sign.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dd$i</code></pre>
+<pre><code>##  [1] 0.0000 0.1111 0.2222 0.3333 0.4444 0.5556 0.6667 0.7778 0.8889 1.0000</code></pre>
+<h2 id="the-3-arguments-of-in-data.table">The 3 arguments of <code>[</code> in data.table</h2>
+<p>the first argument allows to subset the data, the second allows to perform function on that subset, the third argument allows to apply the function by groups. TBD.</p>
+<h2 id="using-keys">Using <code>keys</code></h2>
+<p>Here we show how the keys optins can be used to compute lag variables in a <code>data.table</code>. This requires that you understood the way data.table works.</p>
+<p>For this we are going to use a simulated dynamic panel. This panel will represent draws from an AR(1) process with a random effect</p>
+<p><br /><span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>y</em><sub><em>i</em><em>t</em></sub> = <em>ρ</em> * <em>y</em><sub><em>i</em><em>t</em> − 1</sub> + <em>f</em><sub><em>i</em></sub> + <em>u</em><sub><em>i</em><em>t</em></sub></span><br /></p>
+<p>Let's first generate the data in a very crude and slow way.</p>
+<pre class="sourceCode r"><code class="sourceCode r">p =<span class="st"> </span><span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">t =</span> <span class="dv">10</span>, <span class="dt">rho =</span> <span class="fl">0.8</span>, <span class="dt">f_sd =</span> <span class="fl">0.2</span>, <span class="dt">y0_sd =</span> <span class="dv">1</span>, <span class="dt">u_sd =</span> <span class="dv">1</span>)
+
+<span class="co"># create 1 entry per individual and draw a random length</span>
+dd =<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">i =</span> <span class="dv">1</span>:p$n, <span class="dt">l =</span> <span class="kw">rpois</span>(p$n, p$t), <span class="dt">y0 =</span> <span class="kw">rnorm</span>(p$n, <span class="dt">sd =</span> p$y0_sd), 
+    <span class="dt">f =</span> <span class="kw">exp</span>(<span class="kw">rnorm</span>(p$n, <span class="dt">sd =</span> p$y0_sd)))
+
+<span class="co"># for each individual we create the time series</span>
+dd =<span class="st"> </span>dd[, {
+    y =<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>, l)
+    y[<span class="dv">1</span>] =<span class="st"> </span>y0
+    u =<span class="st"> </span><span class="kw">rnorm</span>(l, <span class="dt">sd =</span> p$u_sd)
+    for (t in <span class="dv">2</span>:l) {
+        y[t] =<span class="st"> </span>p$rho *<span class="st"> </span>y[t -<span class="st"> </span><span class="dv">1</span>] +<span class="st"> </span>f
+    }
+    <span class="kw">list</span>(<span class="dt">y =</span> y, <span class="dt">t =</span> <span class="dv">1</span>:l)
+}, i]</code></pre>
+<p>we plot for a few indidividuals:</p>
+<div class="figure">
+<img src="figure/unnamed-chunk-4.png" alt="plot of chunk unnamed-chunk-4" /><p class="caption">plot of chunk unnamed-chunk-4</p>
+</div>
+<h3 id="computing-panel-first-differences-using-data.table">computing panel first differences using data.table</h3>
+<p>Now that we have our data set we can create the first difference to remove the fixed effect. To do so we are going to use the <code>keys</code> of data.table.</p>
+<p>We first define the keys for the table. The keys should uniquely identify a row in the data. In our case (i,t) is enough.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setkey</span>(dd, i, t)</code></pre>
+<p>Next we can use the <code>J</code> function from the package to create the lag <code>y</code></p>
+<pre class="sourceCode r"><code class="sourceCode r">dd$y.l1 =<span class="st"> </span>dd[<span class="kw">J</span>(i, t -<span class="st"> </span><span class="dv">1</span>), y]$y
+dd</code></pre>
+<pre><code>##       i        y t     y.l1
+##   1:  1 -0.87554 1       NA
+##   2:  1 -0.43341 2 -0.87554
+##   3:  1 -0.07971 3 -0.43341
+##   4:  1  0.20324 4 -0.07971
+##   5:  1  0.42961 5  0.20324
+##  ---                       
+## 185: 20  4.02193 2  0.16114
+## 186: 20  7.11056 3  4.02193
+## 187: 20  9.58147 4  7.11056
+## 188: 20 11.55820 5  9.58147
+## 189: 20 13.13958 6 11.55820</code></pre>
+<p>The <code>J</code> function creates a data.table with the 2 columsn <code>i,j</code> coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use <code>-1</code> to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. An important feature</p>
+
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>Thibaut Lamadon and Florian Oswald</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/bootstrap/js/jquery.js"></script>
+    <script src="/bootstrap/js/bootstrap-transition.js"></script>
+    <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="/bootstrap/js/bootstrap-popover.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="/bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="/bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>

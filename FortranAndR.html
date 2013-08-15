@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bootstrap, from Twitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="/bootstrap/ico/favicon.png">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Econ Notes</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="DataTable.html">DataTable</a></li>
+                          <li><a href="savingRcppGSL.html">savingRcppGSL</a></li>
+                      </ul>
+                  </li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">topic 1</li>
+              <li><a href="#">Link</a></li>
+              <li class="nav-header">topic 2</li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+            <p>Eventhough I highly recommend using <code>C++</code> together with <code>R</code>, in some cases fortran can be faster. For simple problems that do not require additional libraries and when the <code>intel</code> compiler is avaibalbe, <code>f90</code> can be a very good option.</p>
+<p>In this note we will see how one can write some <code>f90</code> code and call it from <code>R</code>. You will notice however how this procedure is less convenient than when using <code>Rcpp</code>.</p>
+<h2 id="overview-of-the-process">Overview of the process</h2>
+<p>What needs to be done is:</p>
+<ul>
+<li>write a Fortran subroutine</li>
+<li>compile the subroutine</li>
+<li>load the generated library in R</li>
+<li>call the function in R</li>
+</ul>
+<h2 id="the-f90-subroutine">the f90 subroutine</h2>
+<p>let's write a very simple matrix multiplication</p>
+<pre class="f90"><code>subroutine fmult(A,X,Y,n,m)
+implicit none
+
+integer :: n,i,j
+double precision,dimension(n,m) :: A
+double precision,dimension(m) :: X
+double precision,dimension(n) :: Y
+
+do i = 1,n
+Y(i)=0
+do j = 1,m
+  Y(i) = Y(i) + A(i,j,1) * X(j) 
+end do
+end do
+
+end</code></pre>
+<p>save this code to <code>fmult.f90</code> , we then compile it into a library using the following command:</p>
+<pre><code>R CMD SHLIB fmult.f90</code></pre>
+<p>at this point we can start R, load the library and call the function:</p>
+<pre class="sourceCode R"><code class="sourceCode r"><span class="kw">dyn.load</span>(<span class="st">&#39;fmult.so&#39;</span>)
+
+A =<span class="st"> </span><span class="kw">array</span>(<span class="kw">runif</span>(<span class="dv">100</span>),<span class="kw">c</span>(<span class="dv">10</span>,<span class="dv">10</span>))
+X =<span class="st"> </span><span class="kw">array</span>(<span class="kw">runif</span>(<span class="dv">10</span>),<span class="kw">c</span>(<span class="dv">10</span>))
+res =<span class="st"> </span><span class="kw">.Fortran</span>(<span class="st">&#39;fmult&#39;</span>, <span class="dt">A=</span>A, <span class="dt">X=</span>X, <span class="dt">Y=</span><span class="kw">double</span>(<span class="kw">length</span>(X)),<span class="kw">as.integer</span>(<span class="kw">dim</span>(A)[<span class="dv">1</span>]),<span class="kw">as.integer</span>(<span class="kw">dim</span>(A)[<span class="dv">2</span>]))
+<span class="kw">print</span>(res$Y)</code></pre>
+<h2 id="r-wrapper-function">R wrapper function</h2>
+<p>Now we want to write a wrapper that will call the <code>f90</code> function. <code>Rcpp</code> and <code>inline</code> are packages that do this automatically. Unfortunately, at the moment, neither seems to work properly with <code>f90</code> so we will do it by hand.</p>
+<pre class="sourceCode R"><code class="sourceCode r">matmult &lt;-<span class="st"> </span>function(A,X) {
+
+  if (!<span class="kw">is.loaded</span>(<span class="kw">symbol.For</span>(<span class="st">&#39;fmult&#39;</span>))) {
+      <span class="kw">dyn.load</span>(<span class="st">&#39;fmult.so&#39;</span>)
+  }  
+  res =<span class="st"> </span><span class="kw">.Fortran</span>(<span class="st">&#39;fmult&#39;</span>, <span class="dt">A=</span>A, <span class="dt">X=</span>X, <span class="dt">Y=</span><span class="kw">double</span>(<span class="kw">length</span>(X)),<span class="kw">as.integer</span>(<span class="kw">dim</span>(A)[<span class="dv">1</span>]),<span class="kw">as.integer</span>(<span class="kw">dim</span>(A)[<span class="dv">2</span>]))
+  <span class="kw">return</span>(res$Y)
+}</code></pre>
+<p>and we are done!</p>
+<h2 id="tricks-to-remember">Tricks to remember</h2>
+<ul>
+<li>you need to wrap integer with <code>as.integer</code> or they will be set to <code>0</code></li>
+<li>sometimes the routine will be renamed, you can list the internal names using <code>nm -g</code> in the terminal</li>
+<li>it is painful, but constraint yourself to using <code>implicit none</code></li>
+</ul>
+<h2 id="links">links</h2>
+<ul>
+<li><a href="http://math.acadiau.ca/ACMMaC/howtos/Fortran_R.html">howto on returning an array</a></li>
+<li><a href="http://www.nsc.liu.se/~boein/f77to90/a3.html#section10">f90 array sizes</a></li>
+</ul>
+
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>Thibaut Lamadon and Florian Oswald</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/bootstrap/js/jquery.js"></script>
+    <script src="/bootstrap/js/bootstrap-transition.js"></script>
+    <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="/bootstrap/js/bootstrap-popover.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="/bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="/bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>

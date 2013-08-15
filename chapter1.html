@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bootstrap, from Twitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="/bootstrap/ico/favicon.png">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Econ Notes</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="DataTable.html">DataTable</a></li>
+                          <li><a href="savingRcppGSL.html">savingRcppGSL</a></li>
+                      </ul>
+                  </li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">topic 1</li>
+              <li><a href="#">Link</a></li>
+              <li class="nav-header">topic 2</li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+            <h2 id="getting-started-with-mpeccable">Getting started with mpeccable</h2>
+<p>This section will describe some of the basic components of mpeccable. We are going to define a functional, a control variable. We then put them in a constraint and show how we can extract the levels and jacobian for a given value of the parameters.</p>
+<h3 id="cake-problem">The problem</h3>
+<p>We consider an extremely simple problem of asset accumulation with some level of uncertainty. We consider 3 state of the world index by <code>z</code>. In state <code>z</code> the agent recieved <code>z</code> amounts of apple.</p>
+<p>Each period the agent decides how much to consume and how much to save. The agent discounts the future at rate <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>r</em></span> and earns the same interest on savings. We use <code>log</code> utility.</p>
+<p>The dynamic problem is simply represented using <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>( ⋅ ): R × N → R</span> implicitely defined by the following Bellman equation:</p>
+<p><br /><span class="math">$latex
+  V_z(a) = \max_{a'} u((1+r) a -a') + \frac{1}{1+r} E_{z'|z} V_{z'}(a')
+$</span><br /></p>
+<h3 id="the-collocation">The collocation</h3>
+<p>First we define the collocation. This is a list of values at which the constraint should be evaluated. At this point we do something very simple, we define uniform grid between on <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>[0, 1]</span> and discretize it over 10 points. We also choose 3 discrete states for the variable <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em></span>.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(mpeccable)
+
+Na =<span class="st"> </span><span class="dv">10</span>
+asupp =<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dt">l =</span> Na)
+zvals =<span class="st"> </span><span class="dv">1</span>:<span class="dv">3</span>
+cc =<span class="st"> </span><span class="kw">expand.grid</span>(<span class="dt">a =</span> asupp, <span class="dt">z =</span> zvals)</code></pre>
+<h3 id="create-a-functional">Create a functional</h3>
+<p>Creating the functional representation of the value function is very simple thanks to the utility functions that create specific ones for you. For example, <code>F_SplineInt1D</code> generates a 1-dimensional spline indexed by an integer. This is perfect to represent our value <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>(<em>a</em>)</span>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">V =<span class="st"> </span><span class="kw">F_SplineInt1D</span>(asupp, zvals)
+g. =<span class="st"> </span><span class="kw">param0</span>(V, <span class="st">&quot;g&quot;</span>, <span class="dv">1</span>)</code></pre>
+<p>The second line collects an itinialized parameter vector that represents a particular <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>(<em>a</em>)</span> function. <code>g.</code> is of type <code>FDiff</code>, its levels are the coefficients of the representing spline. Here we have 12 of them. The Jacobian is 12x12 and diagonal. <code>V</code> is of type <code>frep</code> and that's why we were able to call <code>params0</code> on it which returns the an itinialized parameter vector.</p>
+<h3 id="create-a-control-variable">Create a control variable</h3>
+<p>Remember that in our problem we have to optimaly choose the asset in the next period. This is a control variable and we need to declare it since we want to compute the Jacobian with repsect to it.</p>
+<pre class="sourceCode r"><code class="sourceCode r">a_ =<span class="st"> </span><span class="kw">FDiff</span>(cc$a -<span class="st"> </span><span class="fl">0.1</span>, <span class="st">&quot;a&quot;</span>)</code></pre>
+<p>Using the <code>FDiff</code> function I can easily do that and generate this control variable. I gave it the label <code>a</code> and use an underscore as a naming convention for my code. I tell the function that this control variable must be chosen at each asset <code>a</code> in the collocation. In another document we'll show that generalizes to multiple dimensions.</p>
+<h3 id="our-first-jacobian">Our first Jacobian</h3>
+<p>We can now look at the Jacobian of teh value function evaluated at the control variable:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">options</span>(<span class="dt">mpeccable.coloring =</span> <span class="ot">TRUE</span>)
+R =<span class="st"> </span><span class="kw">V</span>(a_, cc$z, g.)
+<span class="kw">image</span>(R@J)</code></pre>
+<div class="figure">
+<img src="figure/simpleplot.png" alt="plot of chunk simpleplot" /><p class="caption">plot of chunk simpleplot</p>
+</div>
+<p>First we called <code>options(mpeccable.coloring=TRUE)</code> to tell <code>mpeccable</code> that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em></span> with respect to the control variables <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>a</em><sub><em>j</em></sub><sup> * </sup></span>. There is exactly one control per state <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>(<em>a</em><sub><em>j</em></sub>, <em>z</em><sub><em>j</em></sub>)</span>. Then the left part has big blocks. This is because the control the spline is evaluated at the control variable for which we don't know ex-ante the value. Because the optimizer needs to know the structure from the begining, we need to be conservative and allow for any parameter of the spline to be entering a given state. However, some sparisty remains, because we know for sure that a <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>a</em><sub><em>j</em></sub></span> from a given <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em><sub><em>j</em></sub></span> never enters a different <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em><sub><em>j</em></sub></span> hence the lbock diagonal.</p>
+<h3 id="define-the-utility-and-the-low-of-motion-for-z">Define the utility and the low of motion for z</h3>
+<p>We choose a simple utilty CRRA utility function with parameter <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>0. 5</span> and we use interest rate of 5%</p>
+<pre class="sourceCode r"><code class="sourceCode r">U =<span class="st"> </span>((<span class="dv">1</span> +<span class="st"> </span><span class="fl">0.05</span>) *<span class="st"> </span>cc$a -<span class="st"> </span>a_)^<span class="fl">0.5</span>
+Up =<span class="st"> </span><span class="fl">0.5</span> *<span class="st"> </span>((<span class="dv">1</span> +<span class="st"> </span><span class="fl">0.05</span>) *<span class="st"> </span>cc$a -<span class="st"> </span>a_)^(<span class="dv">1</span> -<span class="st"> </span><span class="fl">0.5</span>)</code></pre>
+<p>For simplicity, assumes that <code>z</code> goes in circle, from 1, to 2, to 3 and back to 1, I can define <code>z</code> tommorow as:</p>
+<pre class="sourceCode r"><code class="sourceCode r">z1 =<span class="st"> </span>(cc$z%%<span class="dv">3</span>) +<span class="st"> </span><span class="dv">1</span></code></pre>
+<p>And using this <code>z1</code> I can write up the Bellman level constraint:</p>
+<pre class="sourceCode r"><code class="sourceCode r">R =<span class="st"> </span><span class="kw">V</span>(cc$a, cc$z, g.) -<span class="st"> </span>U -<span class="st"> </span><span class="fl">0.95</span> *<span class="st"> </span><span class="kw">V</span>(a_, z1, g.)
+<span class="kw">image</span>(R@J)</code></pre>
+<div class="figure">
+<img src="figure/simpleplot2.png" alt="plot of chunk simpleplot2" /><p class="caption">plot of chunk simpleplot2</p>
+</div>
+<p>And this is the Jacobian for our Bellman equation, now we need to add the first order condition and we are done! Notice how now the function parameters also appear in the contemporaneously through the diagonal because of the first term.</p>
+<h3 id="first-order-condition-euler-equation">First order condition, Euler equation</h3>
+<p>The last equation we need to garantee optimally, is the first order condition.</p>
+<p><br /><span class="math">$latex
+  u'((1+r) a -a') =  \frac{1}{1+r} E_{z'|z} V'_{z'}(a')
+$</span><br /></p>
+<pre class="sourceCode r"><code class="sourceCode r">R2 =<span class="st"> </span>Up -<span class="st"> </span><span class="fl">0.95</span> *<span class="st"> </span><span class="kw">V</span>(a_, z1, g., <span class="dt">deriv =</span> <span class="dv">1</span>)
+<span class="kw">image</span>(R@J)</code></pre>
+<div class="figure">
+<img src="figure/simpleplot3.png" alt="plot of chunk simpleplot3" /><p class="caption">plot of chunk simpleplot3</p>
+</div>
+<h3 id="combine-all-the-constraints">Combine all the constraints</h3>
+<pre class="sourceCode r"><code class="sourceCode r">R2 =<span class="st"> </span>Up -<span class="st"> </span><span class="fl">0.95</span> *<span class="st"> </span><span class="kw">V</span>(a_, z1, g., <span class="dt">deriv =</span> <span class="dv">1</span>)
+<span class="kw">image</span>(R@J)</code></pre>
+<div class="figure">
+<img src="figure/simpleplot4.png" alt="plot of chunk simpleplot4" /><p class="caption">plot of chunk simpleplot4</p>
+</div>
+
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>Thibaut Lamadon and Florian Oswald</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/bootstrap/js/jquery.js"></script>
+    <script src="/bootstrap/js/bootstrap-transition.js"></script>
+    <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="/bootstrap/js/bootstrap-tab.js"></script>
+    <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="/bootstrap/js/bootstrap-popover.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="/bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="/bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>
