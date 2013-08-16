@@ -20,7 +20,7 @@ SRCDIR = 'content'
 
 RMD_FILES      = FileList['content/*.Rmd']
 MARKDOWN_FILES = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('md')) }
-HTML_FILES     = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('html')) }
+HTML_FILES     = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('htmlfrag')) }
 
 # CLEAN.include(MARKDOWN_FILES)
 # CLEAN.include(HTML_FILES)
@@ -31,9 +31,9 @@ CLEAN.include(OBJDIR)
 task :makeMarkdownFiles     => MARKDOWN_FILES
 task :makeHtmlFiles         => HTML_FILES
 
-# making sure build folder exists
+# INITIALIZE BUILD DIRECTORY
+# ==========================
 directory OBJDIR
-
 
 # FILE PROCESSING RULES
 # =====================
@@ -52,7 +52,7 @@ end
 
 # MARKDOWN => HTML FRAGMENT
 # -------------------------
-rule '.html' => '.md' do |t|
+rule '.htmlfrag' => '.md' do |t|
   #system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
   system "pandoc #{t.source}" +
          " -o #{t.name} " +
@@ -68,7 +68,9 @@ task :pdf => [:makeMarkdownFiles]  do
   system "cd build; pandoc --chapters --toc -s *.md -t latex -o book.pdf"
 end
 
-task :html => [:makeHtmlFiles] 
+task :html => [:makeHtmlFiles,:prepare] do
+  system "cp -rf lib/* #{OBJDIR}"
+end
 
 task :serve do
   system "ruby -run -e httpd -- -p 5000 ./build"
@@ -85,7 +87,7 @@ task :prepare do
   view = Mustache.new
 
   for chap in BOOK_CONTENT
-      data = File.open("build/" + chap + ".html", "rb") {|io| io.read}
+      data = File.open("build/" + chap + ".htmlfrag", "rb") {|io| io.read}
 
       view = Mustache.new
       view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
