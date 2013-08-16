@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Bootstrap, from Twitter</title>
+    <title>EconR - doing economics with R</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -102,16 +102,16 @@ v2 =<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</
 dd =<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">i =</span> v1, <span class="dt">l =</span> v2)
 dd</code></pre>
 <pre><code>##          i l
-##  1: 0.0000 c
-##  2: 0.1111 b
+##  1: 0.0000 a
+##  2: 0.1111 a
 ##  3: 0.2222 c
-##  4: 0.3333 c
-##  5: 0.4444 b
+##  4: 0.3333 a
+##  5: 0.4444 a
 ##  6: 0.5556 b
 ##  7: 0.6667 a
-##  8: 0.7778 b
+##  8: 0.7778 a
 ##  9: 0.8889 b
-## 10: 1.0000 c</code></pre>
+## 10: 1.0000 b</code></pre>
 <p>Then columns can be accessed by names using the dollar sign.</p>
 <pre class="sourceCode r"><code class="sourceCode r">dd$i</code></pre>
 <pre><code>##  [1] 0.0000 0.1111 0.2222 0.3333 0.4444 0.5556 0.6667 0.7778 0.8889 1.0000</code></pre>
@@ -149,18 +149,18 @@ dd =<span class="st"> </span>dd[, {
 <p>Next we can use the <code>J</code> function from the package to create the lag <code>y</code></p>
 <pre class="sourceCode r"><code class="sourceCode r">dd$y.l1 =<span class="st"> </span>dd[<span class="kw">J</span>(i, t -<span class="st"> </span><span class="dv">1</span>), y]$y
 dd</code></pre>
-<pre><code>##       i        y t     y.l1
-##   1:  1 -0.87554 1       NA
-##   2:  1 -0.43341 2 -0.87554
-##   3:  1 -0.07971 3 -0.43341
-##   4:  1  0.20324 4 -0.07971
-##   5:  1  0.42961 5  0.20324
-##  ---                       
-## 185: 20  4.02193 2  0.16114
-## 186: 20  7.11056 3  4.02193
-## 187: 20  9.58147 4  7.11056
-## 188: 20 11.55820 5  9.58147
-## 189: 20 13.13958 6 11.55820</code></pre>
+<pre><code>##       i      y  t   y.l1
+##   1:  1 0.6968  1     NA
+##   2:  1 0.6998  2 0.6968
+##   3:  1 0.7023  3 0.6998
+##   4:  1 0.7042  4 0.7023
+##   5:  1 0.7058  5 0.7042
+##  ---                    
+## 181: 20 3.7920  6 3.2116
+## 182: 20 4.2563  7 3.7920
+## 183: 20 4.6277  8 4.2563
+## 184: 20 4.9249  9 4.6277
+## 185: 20 5.1626 10 4.9249</code></pre>
 <p>The <code>J</code> function creates a data.table with the 2 columsn <code>i,j</code> coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use <code>-1</code> to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. An important feature</p>
 
         </div><!--/span-->
