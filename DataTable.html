@@ -68,6 +68,7 @@
                       <ul class="dropdown-menu">
                           <li><a href="DataTable.html">DataTable</a></li>
                           <li><a href="savingRcppGSL.html">Consumption Saving Model</a></li>
+                          <li><a href="BlitzExample.html">Blitz Example</a></li>
                           <li><a href="FortranAndR.html">Fortran And R</a></li>
                       </ul>
                   </li>
@@ -92,6 +93,7 @@
         </div><!--/span-->
         <div class="span9">
             <p>This section will described how to use the <code>data.table</code> package. This package is a much faster implementation of the <code>data.frame</code> object which it also extends.</p>
+<p>This is rather superficial overview of <code>data.table</code> where we describe briefly how to construct a panel data set with lagged variables. For a thorough overview of the capabilities of data.table, please refer to the excellent documentation of the package, for example in the vignettes at <a href="http://cran.r-project.org/web/packages/data.table/index.html">http://cran.r-project.org/web/packages/data.table/index.html</a></p>
 <h2 id="the-structure-of-data.table">The structure of data.table</h2>
 <p>A data.table is a collection of vectors of identical length. Each vector forms a column, and so the data.frame can be thought of as a table with a number of row and a number of columns. Those structures are often called <code>rogue arrays</code> (an non rogue array has a same type in every column).</p>
 <p>So we can easily create such an object:</p>
@@ -102,19 +104,25 @@ v2 =<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</
 dd =<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">i =</span> v1, <span class="dt">l =</span> v2)
 dd</code></pre>
 <pre><code>##          i l
-##  1: 0.0000 a
-##  2: 0.1111 a
-##  3: 0.2222 c
-##  4: 0.3333 a
-##  5: 0.4444 a
-##  6: 0.5556 b
-##  7: 0.6667 a
+##  1: 0.0000 b
+##  2: 0.1111 b
+##  3: 0.2222 a
+##  4: 0.3333 c
+##  5: 0.4444 b
+##  6: 0.5556 c
+##  7: 0.6667 c
 ##  8: 0.7778 a
-##  9: 0.8889 b
-## 10: 1.0000 b</code></pre>
-<p>Then columns can be accessed by names using the dollar sign.</p>
-<pre class="sourceCode r"><code class="sourceCode r">dd$i</code></pre>
+##  9: 0.8889 a
+## 10: 1.0000 c</code></pre>
+<p>Then columns can be accessed by names using the dollar sign as in a standard data.frame, or by their name, or by handling the table as a list (a data.table <strong>is</strong> a list)</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># use dollar sign</span>
+dd$i</code></pre>
 <pre><code>##  [1] 0.0000 0.1111 0.2222 0.3333 0.4444 0.5556 0.6667 0.7778 0.8889 1.0000</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># same as using the j-argument, the list index or the the list name?</span>
+<span class="kw">all</span>(<span class="kw">all.equal</span>(dd$i,dd[,i]),
+    <span class="kw">all.equal</span>(dd$i,dd[[<span class="dv">1</span>]]),
+    <span class="kw">all.equal</span>(dd$i,dd[[<span class="st">&quot;i&quot;</span>]]))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <h2 id="the-3-arguments-of-in-data.table">The 3 arguments of <code>[</code> in data.table</h2>
 <p>the first argument allows to subset the data, the second allows to perform function on that subset, the third argument allows to apply the function by groups. TBD.</p>
 <h2 id="using-keys">Using <code>keys</code></h2>
@@ -149,19 +157,51 @@ dd =<span class="st"> </span>dd[, {
 <p>Next we can use the <code>J</code> function from the package to create the lag <code>y</code></p>
 <pre class="sourceCode r"><code class="sourceCode r">dd$y.l1 =<span class="st"> </span>dd[<span class="kw">J</span>(i, t -<span class="st"> </span><span class="dv">1</span>), y]$y
 dd</code></pre>
-<pre><code>##       i      y  t   y.l1
-##   1:  1 0.6968  1     NA
-##   2:  1 0.6998  2 0.6968
-##   3:  1 0.7023  3 0.6998
-##   4:  1 0.7042  4 0.7023
-##   5:  1 0.7058  5 0.7042
-##  ---                    
-## 181: 20 3.7920  6 3.2116
-## 182: 20 4.2563  7 3.7920
-## 183: 20 4.6277  8 4.2563
-## 184: 20 4.9249  9 4.6277
-## 185: 20 5.1626 10 4.9249</code></pre>
-<p>The <code>J</code> function creates a data.table with the 2 columsn <code>i,j</code> coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use <code>-1</code> to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. An important feature</p>
+<pre><code>##       i       y t    y.l1
+##   1:  1 -0.3884 1      NA
+##   2:  1  0.3990 2 -0.3884
+##   3:  1  1.0288 3  0.3990
+##   4:  1  1.5327 4  1.0288
+##   5:  1  1.9358 5  1.5327
+##  ---                     
+## 184: 20  2.7542 3  1.5453
+## 185: 20  3.7214 4  2.7542
+## 186: 20  4.4951 5  3.7214
+## 187: 20  5.1141 6  4.4951
+## 188: 20  5.6093 7  5.1141</code></pre>
+<p>The <code>J</code> function creates a data.table with the 2 columsn <code>i,j</code> coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use <code>-1</code> to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything.</p>
+<h3 id="alternative-approach-add-lagged-column-by-reference-with">Alternative approach: add lagged column by reference with <code>:=</code></h3>
+<p>There is an alternative approach to the above. It differs mainly in how we add the new column containing the lagged values. When the data.table contains a lot of data, it is preferrable to manipulate it <strong>by reference</strong>, i.e. using the function <code>:=</code>. The following is a slight modification of a related <a href="http://stackoverflow.com/questions/11397771/r-data-table-grouping-for-lagged-regression">stackoverflow.com answer</a>. It relies on the concept of a <em>self-join</em>, i.e. we join the data.table to itself based on the value of a key:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">setcolorder</span>(dd,<span class="kw">c</span>(<span class="st">&quot;i&quot;</span>,<span class="st">&quot;t&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;y.l1&quot;</span>)) <span class="co"># change column order by reference</span>
+dd[<span class="kw">list</span>(i,t<span class="dv">-1</span>)] <span class="co"># evaluate at value of [lagged] key: for each i, the t index is shifted one back</span></code></pre>
+<pre><code>##       i t       y    y.l1
+##   1:  1 0      NA      NA
+##   2:  1 1 -0.3884      NA
+##   3:  1 2  0.3990 -0.3884
+##   4:  1 3  1.0288  0.3990
+##   5:  1 4  1.5327  1.0288
+##  ---                     
+## 184: 20 2  1.5453  0.0341
+## 185: 20 3  2.7542  1.5453
+## 186: 20 4  3.7214  2.7542
+## 187: 20 5  4.4951  3.7214
+## 188: 20 6  5.1141  4.4951</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">dd[,y.l2 :<span class="er">=</span><span class="st"> </span>dd[<span class="kw">list</span>(i,t<span class="dv">-1</span>)][[<span class="st">&quot;y&quot;</span>]]] <span class="co"># just add the &quot;y&quot; column of that to dd by reference</span></code></pre>
+<pre><code>##       i t       y    y.l1    y.l2
+##   1:  1 1 -0.3884      NA      NA
+##   2:  1 2  0.3990 -0.3884 -0.3884
+##   3:  1 3  1.0288  0.3990  0.3990
+##   4:  1 4  1.5327  1.0288  1.0288
+##   5:  1 5  1.9358  1.5327  1.5327
+##  ---                             
+## 184: 20 3  2.7542  1.5453  1.5453
+## 185: 20 4  3.7214  2.7542  2.7542
+## 186: 20 5  4.4951  3.7214  3.7214
+## 187: 20 6  5.1141  4.4951  4.4951
+## 188: 20 7  5.6093  5.1141  5.1141</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">dd[,<span class="kw">all.equal</span>(y.l1,y.l2)]</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>You can see that this already produces the desired result: the value of <code>y</code></p>
 
         </div><!--/span-->
       </div><!--/row-->
