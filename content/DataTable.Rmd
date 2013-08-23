@@ -1,5 +1,7 @@
 This section will described how to use the `data.table` package. This package is a much faster implementation of the `data.frame` object which it also extends.
 
+This is rather superficial overview of `data.table` where we describe briefly how to construct a panel data set with lagged variables. For a thorough overview of the capabilities of data.table, please refer to the excellent documentation of the package, for example in the vignettes at [http://cran.r-project.org/web/packages/data.table/index.html](http://cran.r-project.org/web/packages/data.table/index.html) 
+
 ## The structure of data.table
 
 A data.table is a collection of vectors of identical length. Each vector forms a column, and so the data.frame can be thought of as a table with a number of row and a number of columns. Those structures are often called `rogue arrays` (an non rogue array has a same type in every column).
@@ -14,10 +16,15 @@ dd = data.table(i = v1,  l = v2)
 dd
 ```
 
-Then columns can be accessed by names using the dollar sign.
+Then columns can be accessed by names using the dollar sign as in a standard data.frame, or by their name, or by handling the table as a list (a data.table **is** a list)
 
-```{r}
+```{r,tidy=FALSE}
+# use dollar sign
 dd$i
+# same as using the j-argument, the list index or the the list name?
+all(all.equal(dd$i,dd[,i]),
+    all.equal(dd$i,dd[[1]]),
+    all.equal(dd$i,dd[["i"]]))
 ```
 
 ## The 3 arguments of `[` in data.table
@@ -80,7 +87,20 @@ dd
 ```
 
 The `J` function creates a data.table with the 2 columsn `i,j` coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use `-1` to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. 
-An important feature
+
+
+### Alternative approach: add lagged column by reference with `:=`
+
+There is an alternative approach to the above. It differs mainly in how we add the new column containing the lagged values. When the data.table contains a lot of data, it is preferrable to manipulate it **by reference**, i.e. using the function `:=`. The following is a slight modification of a related [stackoverflow.com answer](http://stackoverflow.com/questions/11397771/r-data-table-grouping-for-lagged-regression). It relies on the concept of a *self-join*, i.e. we join the data.table to itself based on the value of a key:
+
+```{r,tidy=FALSE}
+setcolorder(dd,c("i","t","y","y.l1")) # change column order by reference
+dd[list(i,t-1)] # evaluate at value of [lagged] key: for each i, the t index is shifted one back
+dd[,y.l2 := dd[list(i,t-1)][["y"]]] # just add the "y" column of that to dd by reference
+dd[,all.equal(y.l1,y.l2)]
+```
+
+You can see that this already produces the desired result: the value of `y`
 
 
 
