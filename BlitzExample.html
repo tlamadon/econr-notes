@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>EconR - doing economics with R</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="./bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/magula.css">
+    <script src="highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="./bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="./bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="./bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="./bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="./bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="./bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="./bootstrap/ico/favicon.png">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Econ Notes</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="DataTable.html">DataTable</a></li>
+                          <li><a href="savingRcppGSL.html">Consumption Saving Model</a></li>
+                          <li><a href="BlitzExample.html">Blitz Example</a></li>
+                          <li><a href="FortranAndR.html">Fortran And R</a></li>
+                      </ul>
+                  </li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div class="span3">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="nav-header">topic 1</li>
+              <li><a href="#">Link</a></li>
+              <li class="nav-header">topic 2</li>
+              <li><a href="#">Link</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span9">
+            <h1 id="using-the-blitz-library">Using the Blitz library</h1>
+<p>blitz++ is a C library for high dimensional maths.</p>
+<p>Need to add explanation here:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Rcpp)
+<span class="kw">library</span>(inline)</code></pre>
+<pre><code>## Loading required package: methods</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">
+
+inc =<span class="st"> &#39;</span>
+<span class="st">#include &lt;blitz/array.h&gt;</span>
+<span class="st">&#39;</span>
+
+src =<span class="st"> &#39;</span>
+<span class="st">using namespace blitz;</span>
+<span class="st">Rcpp::NumericVector A(A_);</span>
+<span class="st">Rcpp::NumericVector A2(A2_);</span>
+
+<span class="st">// read dimension attribute of R arrays</span>
+<span class="st">Rcpp::IntegerVector d1 = A.attr(&quot;dim&quot;);</span>
+<span class="st">Rcpp::IntegerVector d2 = A2.attr(&quot;dim&quot;);</span>
+
+<span class="st">// create 2 blitz cubes B and B2</span>
+<span class="st">// supply contents of dim vectors manually</span>
+<span class="st">blitz::Array&lt;double,3&gt; B(A.begin(), shape(d1(0),d1(1),d1(2)), neverDeleteData);</span>
+<span class="st">blitz::Array&lt;double,3&gt; B2(A2.begin(), shape(d2(0),d2(1),d2(2)), neverDeleteData);</span>
+
+<span class="st">// do some blitz arithmethic</span>
+<span class="st">blitz::Array&lt;double,3&gt; C(d1(0),d1(1),d1(2));</span>
+<span class="st">C = B + B2;</span>
+
+<span class="st">// copy the result back to B (which is a view of A, i.e. will contain the same data)</span>
+<span class="st">B = C;</span>
+
+<span class="st">// return array</span>
+<span class="st">return wrap(A);</span>
+<span class="st">&#39;</span></code></pre>
+<p>Result:</p>
+<pre class="sourceCode r"><code class="sourceCode r">A =<span class="st"> </span><span class="kw">array</span>(<span class="dv">1</span>:<span class="dv">60</span>,<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">6</span>))
+A2 =<span class="st"> </span><span class="kw">array</span>(<span class="dv">120</span>:<span class="dv">60</span>,<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">6</span>))
+
+f =<span class="st"> </span><span class="kw">cxxfunction</span>(<span class="kw">signature</span>(<span class="dt">A_=</span><span class="st">&quot;numeric&quot;</span>,<span class="dt">A2_=</span><span class="st">&quot;numeric&quot;</span>),<span class="dt">body=</span>src,<span class="dt">plugin=</span><span class="st">&quot;Rcpp&quot;</span>,<span class="dt">includes=</span>inc)
+<span class="kw">all.equal</span>(<span class="kw">f</span>(A,A2),A+A2)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>Thibaut Lamadon and Florian Oswald</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="./bootstrap/js/jquery.js"></script>
+    <script src="./bootstrap/js/bootstrap-transition.js"></script>
+    <script src="./bootstrap/js/bootstrap-alert.js"></script>
+    <script src="./bootstrap/js/bootstrap-modal.js"></script>
+    <script src="./bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="./bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="./bootstrap/js/bootstrap-tab.js"></script>
+    <script src="./bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="./bootstrap/js/bootstrap-popover.js"></script>
+    <script src="./bootstrap/js/bootstrap-button.js"></script>
+    <script src="./bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="./bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="./bootstrap/js/bootstrap-typeahead.js"></script>
+
+  </body>
+</html>
