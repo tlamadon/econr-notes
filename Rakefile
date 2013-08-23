@@ -20,7 +20,7 @@ SRCDIR = 'content'
 
 RMD_FILES      = FileList['content/*.Rmd']
 MARKDOWN_FILES = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('md')) }
-HTML_FILES     = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('html')) }
+HTML_FILES     = BOOK_CONTENT.collect { |fs| File.join(OBJDIR, File.basename(fs).ext('htmlfrag')) }
 
 # CLEAN.include(MARKDOWN_FILES)
 # CLEAN.include(HTML_FILES)
@@ -31,30 +31,36 @@ CLEAN.include(OBJDIR)
 task :makeMarkdownFiles     => MARKDOWN_FILES
 task :makeHtmlFiles         => HTML_FILES
 
-# making sure build folder exists
+# INITIALIZE BUILD DIRECTORY
+# ==========================
 directory OBJDIR
 
-# rule to build Rmd files
+# FILE PROCESSING RULES
+# =====================
+
+# RMD  =>   MD
+# -------------------------
 rule '.md' => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('Rmd')) },'%d'] do |t|
     system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../#{t.source}');\""
 end
 
-# rule to copy markdown files
+# COPY MARKDOWN => BUILD
+# -------------------------
 rule /build.*.md/ => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('md')) },'%d'] do |t|
     system "cp #{t.source} #{t.name}"
 end
 
-# rule to copy markdown files
-rule '.html' => '.md' do |t|
+# MARKDOWN => HTML FRAGMENT
+# -------------------------
+rule '.htmlfrag' => '.md' do |t|
   #system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
-  system "pandoc --mathjax -s #{t.source}" +
-         " -t html -o #{t.name} " +
-         " --template ~/git/pandoc-bootstrap-template/template.html " +
-         " --css ~/git/pandoc-bootstrap-template/template.css " +
-         " --toc " +
-         " --toc-depth 2 " +
+  system "pandoc #{t.source}" +
+         " -o #{t.name} " +
          " --data-dir=./" 
 end
+
+# GENERAL TASKS
+# =============
 
 task :default => [:pdf] 
 
@@ -62,19 +68,36 @@ task :pdf => [:makeMarkdownFiles]  do
   system "cd build; pandoc --chapters --toc -s *.md -t latex -o book.pdf"
 end
 
-task :html => [:makeHtmlFiles] 
+task :html => [:makeHtmlFiles,:prepare] do
+  system "cp -rf lib/* #{OBJDIR}"
+end
 
 task :serve do
   system "ruby -run -e httpd -- -p 5000 ./build"
 end
+
+
+# TESTING
+# =======
+
 
 task :prepare do
 
   Mustache.template_file = 'templates/html-bootstrap/template.mustache.html'
   view = Mustache.new
 
-  view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
+  for chap in BOOK_CONTENT
+      data = File.open("build/" + chap + ".htmlfrag", "rb") {|io| io.read}
 
-  puts view.render
+      view = Mustache.new
+      view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
+      view[:chaps]  = [ { "name" => "DataTable", "link" => "DataTable.html"} , 
+                        { "name" => "Consumption Saving Model", "link" => "savingRcppGSL.html"},
+                        { "name" => "Fortran And R", "link" => "FortranAndR.html"} ]
+      view[:content] = data
+
+      File.open("build/" + chap + ".html", 'w') { |file| file.write(view.render) }
+  end
+
 end
 
