@@ -2,3 +2,4 @@ book/*
 build
 examples/fmult/fmult.o
 examples/fmult/fmult.so
+.Rproj.user
