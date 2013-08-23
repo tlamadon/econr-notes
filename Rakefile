@@ -5,7 +5,8 @@ BOOK_CONTENT = [
   "chapter1",
   "DataTable",
   "savingRcppGSL",
-  "FortranAndR"
+  "FortranAndR",
+  "BlitzExample"
 ]
 
 # define a function that extracts the TOC
@@ -93,6 +94,7 @@ task :prepare do
       view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
       view[:chaps]  = [ { "name" => "DataTable", "link" => "DataTable.html"} , 
                         { "name" => "Consumption Saving Model", "link" => "savingRcppGSL.html"},
+                        { "name" => "Blitz Example", "link" => "BlitzExample.html"},
                         { "name" => "Fortran And R", "link" => "FortranAndR.html"} ]
       view[:content] = data
 
