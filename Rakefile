@@ -55,7 +55,7 @@ end
 # -------------------------
 rule '.htmlfrag' => '.md' do |t|
   #system "pandoc --mathjax -s #{t.source} -t html -o #{t.name}"
-  system "pandoc #{t.source}" +
+  system "pandoc --mathjax #{t.source}" +
          " -o #{t.name} " +
          " --data-dir=./" 
 end
