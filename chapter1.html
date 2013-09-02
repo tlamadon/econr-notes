@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="styles/magula.css">
     <script src="highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript"
+      src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
     <style type="text/css">
       body {
         padding-top: 60px;
@@ -96,13 +99,13 @@
 <p>This section will describe some of the basic components of mpeccable. We are going to define a functional, a control variable. We then put them in a constraint and show how we can extract the levels and jacobian for a given value of the parameters.</p>
 <h3 id="cake-problem">The problem</h3>
 <p>We consider an extremely simple problem of asset accumulation with some level of uncertainty. We consider 3 state of the world index by <code>z</code>. In state <code>z</code> the agent recieved <code>z</code> amounts of apple.</p>
-<p>Each period the agent decides how much to consume and how much to save. The agent discounts the future at rate <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>r</em></span> and earns the same interest on savings. We use <code>log</code> utility.</p>
-<p>The dynamic problem is simply represented using <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>( ⋅ ): R × N → R</span> implicitely defined by the following Bellman equation:</p>
-<p><br /><span class="math">$latex
-  V_z(a) = \max_{a'} u((1+r) a -a') + \frac{1}{1+r} E_{z'|z} V_{z'}(a')
-$</span><br /></p>
+<p>Each period the agent decides how much to consume and how much to save. The agent discounts the future at rate <span class="math">\(latex r\)</span> and earns the same interest on savings. We use <code>log</code> utility.</p>
+<p>The dynamic problem is simply represented using <span class="math">\(latex V_z(\cdot):\mathbb{R}\times\mathbb{N} \to \mathbb{R}\)</span> implicitely defined by the following Bellman equation:</p>
+<p><span class="math">\[latex
+  V_z(a) = \max_{a&#39;} u((1+r) a -a&#39;) + \frac{1}{1+r} E_{z&#39;|z} V_{z&#39;}(a&#39;)
+\]</span></p>
 <h3 id="the-collocation">The collocation</h3>
-<p>First we define the collocation. This is a list of values at which the constraint should be evaluated. At this point we do something very simple, we define uniform grid between on <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>[0, 1]</span> and discretize it over 10 points. We also choose 3 discrete states for the variable <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em></span>.</p>
+<p>First we define the collocation. This is a list of values at which the constraint should be evaluated. At this point we do something very simple, we define uniform grid between on <span class="math">\(latex [0,1] \)</span> and discretize it over 10 points. We also choose 3 discrete states for the variable <span class="math">\(latex z\)</span>.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(mpeccable)
 
 Na =<span class="st"> </span><span class="dv">10</span>
@@ -110,10 +113,10 @@ asupp =<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</
 zvals =<span class="st"> </span><span class="dv">1</span>:<span class="dv">3</span>
 cc =<span class="st"> </span><span class="kw">expand.grid</span>(<span class="dt">a =</span> asupp, <span class="dt">z =</span> zvals)</code></pre>
 <h3 id="create-a-functional">Create a functional</h3>
-<p>Creating the functional representation of the value function is very simple thanks to the utility functions that create specific ones for you. For example, <code>F_SplineInt1D</code> generates a 1-dimensional spline indexed by an integer. This is perfect to represent our value <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>(<em>a</em>)</span>.</p>
+<p>Creating the functional representation of the value function is very simple thanks to the utility functions that create specific ones for you. For example, <code>F_SplineInt1D</code> generates a 1-dimensional spline indexed by an integer. This is perfect to represent our value <span class="math">\(latex V_z(a)\)</span>.</p>
 <pre class="sourceCode r"><code class="sourceCode r">V =<span class="st"> </span><span class="kw">F_SplineInt1D</span>(asupp, zvals)
 g. =<span class="st"> </span><span class="kw">param0</span>(V, <span class="st">&quot;g&quot;</span>, <span class="dv">1</span>)</code></pre>
-<p>The second line collects an itinialized parameter vector that represents a particular <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em><sub><em>z</em></sub>(<em>a</em>)</span> function. <code>g.</code> is of type <code>FDiff</code>, its levels are the coefficients of the representing spline. Here we have 12 of them. The Jacobian is 12x12 and diagonal. <code>V</code> is of type <code>frep</code> and that's why we were able to call <code>params0</code> on it which returns the an itinialized parameter vector.</p>
+<p>The second line collects an itinialized parameter vector that represents a particular <span class="math">\(latex V_z(a)\)</span> function. <code>g.</code> is of type <code>FDiff</code>, its levels are the coefficients of the representing spline. Here we have 12 of them. The Jacobian is 12x12 and diagonal. <code>V</code> is of type <code>frep</code> and that's why we were able to call <code>params0</code> on it which returns the an itinialized parameter vector.</p>
 <h3 id="create-a-control-variable">Create a control variable</h3>
 <p>Remember that in our problem we have to optimaly choose the asset in the next period. This is a control variable and we need to declare it since we want to compute the Jacobian with repsect to it.</p>
 <pre class="sourceCode r"><code class="sourceCode r">a_ =<span class="st"> </span><span class="kw">FDiff</span>(cc$a -<span class="st"> </span><span class="fl">0.1</span>, <span class="st">&quot;a&quot;</span>)</code></pre>
@@ -126,9 +129,9 @@ R =<span class="st"> </span><span class="kw">V</span>(a_, cc$z, g.)
 <div class="figure">
 <img src="figure/simpleplot.png" alt="plot of chunk simpleplot" /><p class="caption">plot of chunk simpleplot</p>
 </div>
-<p>First we called <code>options(mpeccable.coloring=TRUE)</code> to tell <code>mpeccable</code> that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>V</em></span> with respect to the control variables <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>a</em><sub><em>j</em></sub><sup> * </sup></span>. There is exactly one control per state <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>(<em>a</em><sub><em>j</em></sub>, <em>z</em><sub><em>j</em></sub>)</span>. Then the left part has big blocks. This is because the control the spline is evaluated at the control variable for which we don't know ex-ante the value. Because the optimizer needs to know the structure from the begining, we need to be conservative and allow for any parameter of the spline to be entering a given state. However, some sparisty remains, because we know for sure that a <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>a</em><sub><em>j</em></sub></span> from a given <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em><sub><em>j</em></sub></span> never enters a different <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>z</em><sub><em>j</em></sub></span> hence the lbock diagonal.</p>
+<p>First we called <code>options(mpeccable.coloring=TRUE)</code> to tell <code>mpeccable</code> that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of <span class="math">\(latex V \)</span> with respect to the control variables <span class="math">\(latex a^*_j\)</span>. There is exactly one control per state <span class="math">\(latex (a_j,z_j)\)</span>. Then the left part has big blocks. This is because the control the spline is evaluated at the control variable for which we don't know ex-ante the value. Because the optimizer needs to know the structure from the begining, we need to be conservative and allow for any parameter of the spline to be entering a given state. However, some sparisty remains, because we know for sure that a <span class="math">\(latex a_j\)</span> from a given <span class="math">\(latex z_j\)</span> never enters a different <span class="math">\(latex z_j\)</span> hence the lbock diagonal.</p>
 <h3 id="define-the-utility-and-the-low-of-motion-for-z">Define the utility and the low of motion for z</h3>
-<p>We choose a simple utilty CRRA utility function with parameter <span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em>0. 5</span> and we use interest rate of 5%</p>
+<p>We choose a simple utilty CRRA utility function with parameter <span class="math">\(latex 0.5\)</span> and we use interest rate of 5%</p>
 <pre class="sourceCode r"><code class="sourceCode r">U =<span class="st"> </span>((<span class="dv">1</span> +<span class="st"> </span><span class="fl">0.05</span>) *<span class="st"> </span>cc$a -<span class="st"> </span>a_)^<span class="fl">0.5</span>
 Up =<span class="st"> </span><span class="fl">0.5</span> *<span class="st"> </span>((<span class="dv">1</span> +<span class="st"> </span><span class="fl">0.05</span>) *<span class="st"> </span>cc$a -<span class="st"> </span>a_)^(<span class="dv">1</span> -<span class="st"> </span><span class="fl">0.5</span>)</code></pre>
 <p>For simplicity, assumes that <code>z</code> goes in circle, from 1, to 2, to 3 and back to 1, I can define <code>z</code> tommorow as:</p>
@@ -142,9 +145,9 @@ Up =<span class="st"> </span><span class="fl">0.5</span> *<span class="st"> </sp
 <p>And this is the Jacobian for our Bellman equation, now we need to add the first order condition and we are done! Notice how now the function parameters also appear in the contemporaneously through the diagonal because of the first term.</p>
 <h3 id="first-order-condition-euler-equation">First order condition, Euler equation</h3>
 <p>The last equation we need to garantee optimally, is the first order condition.</p>
-<p><br /><span class="math">$latex
-  u'((1+r) a -a') =  \frac{1}{1+r} E_{z'|z} V'_{z'}(a')
-$</span><br /></p>
+<p><span class="math">\[latex
+  u&#39;((1+r) a -a&#39;) =  \frac{1}{1+r} E_{z&#39;|z} V&#39;_{z&#39;}(a&#39;)
+\]</span></p>
 <pre class="sourceCode r"><code class="sourceCode r">R2 =<span class="st"> </span>Up -<span class="st"> </span><span class="fl">0.95</span> *<span class="st"> </span><span class="kw">V</span>(a_, z1, g., <span class="dt">deriv =</span> <span class="dv">1</span>)
 <span class="kw">image</span>(R@J)</code></pre>
 <div class="figure">

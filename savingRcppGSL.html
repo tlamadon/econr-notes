@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="styles/magula.css">
     <script src="highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript"
+      src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
     <style type="text/css">
       body {
         padding-top: 60px;
@@ -95,19 +98,19 @@
             <h1 id="solving-a-simple-2-period-consumption-problem-with-rcppgsl">Solving a simple 2-period Consumption problem with RcppGSL</h1>
 <p>In this example we demonstrate how to solve the following problem using the RcppGSL package. GSL is the <a href="https://www.gnu.org/software/gsl/">[GNU scientific library]</a> and has many useful functions written in C++. RcppGSL is the Rcpp interface for R. Please look at the separate chapter &quot;how to install RcppGSL&quot; as that needs a trick or two.</p>
 <h2 id="problem">problem</h2>
-<p><br /><span class="math">$ \begin{array}{ccc} max_x &amp;\log(a - x) + \beta log(x) \\
+<p><span class="math">\[ \begin{array}{ccc} max_x &amp;\log(a - x) + \beta log(x) \\
                            &amp;x \in [0.1,11],\\
                            &amp;a \in {2,3,\dots,10}
-                     \end{array}$</span><br /></p>
+                     \end{array}\]</span></p>
 <p>This is the simplest problem one could try to solve. to add at least some realism, we will linearly interpolate the &quot;future value&quot; $ log(x) $, as our problems most of the times do not admit a closed form of this object.</p>
 <h3 id="solution">Solution</h3>
 <p>The good thing is that there is an analytic solution to this. Taking the derivative w.r.t. x one obtains</p>
-<p><br /><span class="math">$ \begin{array}{cccc} \frac{1}{a-x}        &amp;=&amp; \beta \frac{1}{x} \\
+<p><span class="math">\[ \begin{array}{cccc} \frac{1}{a-x}        &amp;=&amp; \beta \frac{1}{x} \\
                      \beta (a-x)           &amp;=&amp; x \\
                      \beta a               &amp;=&amp; x (1+\beta) \\
                      a\frac{\beta}{1+\beta} &amp;=&amp; x 
-                     \end{array} $</span><br /></p>
-<p>which implies that savings <span class="math"><em>x</em></span> are a constant fraction of current assets.</p>
+                     \end{array} \]</span></p>
+<p>which implies that savings <span class="math">\(x\)</span> are a constant fraction of current assets.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(RcppGSL)</code></pre>
 <pre><code>## Loading required package: Rcpp</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(inline)</code></pre>

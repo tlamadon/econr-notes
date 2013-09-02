@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="styles/magula.css">
     <script src="highlight.pack.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript"
+      src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
     <style type="text/css">
       body {
         padding-top: 60px;
@@ -128,7 +131,9 @@ dd$i</code></pre>
 <h2 id="using-keys">Using <code>keys</code></h2>
 <p>Here we show how the keys optins can be used to compute lag variables in a <code>data.table</code>. This requires that you understood the way data.table works.</p>
 <p>For this we are going to use a simulated dynamic panel. This panel will represent draws from an AR(1) process with a random effect</p>
-<p><br /><span class="math"><em>l</em><em>a</em><em>t</em><em>e</em><em>x</em><em>y</em><sub><em>i</em><em>t</em></sub> = <em>ρ</em> * <em>y</em><sub><em>i</em><em>t</em> − 1</sub> + <em>f</em><sub><em>i</em></sub> + <em>u</em><sub><em>i</em><em>t</em></sub></span><br /></p>
+<p><span class="math">\[latex
+  y_{it} = \rho * y_{it-1} + f_{i} + u_{it} 
+\]</span></p>
 <p>Let's first generate the data in a very crude and slow way.</p>
 <pre class="sourceCode r"><code class="sourceCode r">p =<span class="st"> </span><span class="kw">list</span>(<span class="dt">n =</span> <span class="dv">20</span>, <span class="dt">t =</span> <span class="dv">10</span>, <span class="dt">rho =</span> <span class="fl">0.8</span>, <span class="dt">f_sd =</span> <span class="fl">0.2</span>, <span class="dt">y0_sd =</span> <span class="dv">1</span>, <span class="dt">u_sd =</span> <span class="dv">1</span>)
 
