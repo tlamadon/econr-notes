@@ -1,4 +1,4 @@
-This section will described how to use the `data.table` package. This package is a much faster implementation of the `data.frame` object which it also extends.
+This section will describe how to use the `data.table` package. This package is a much faster implementation of the `data.frame` object which it also extends.
 
 This is rather superficial overview of `data.table` where we describe briefly how to construct a panel data set with lagged variables. For a thorough overview of the capabilities of data.table, please refer to the excellent documentation of the package, for example in the vignettes at [http://cran.r-project.org/web/packages/data.table/index.html](http://cran.r-project.org/web/packages/data.table/index.html) 
 

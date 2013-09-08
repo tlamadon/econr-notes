@@ -92,7 +92,7 @@ task :clean_html do
 end
 
 task :publish do
-  
+  system "rsync"
 end
 # TESTING
 # =======
@@ -101,7 +101,9 @@ task :prepare do
 
   Mustache.template_file = 'content/index.htmlfrag'
   view = Mustache.new
-  view[:items]  = BOOK_INDEX["chapters"]
+  view[:items]         = BOOK_INDEX["chapters"]
+  view[:contributors]  = get_contributors()
+  view[:navfixed]      = false
   File.open("build/" + "index.htmlfrag", 'w') { |file| file.write(view.render) }
 
   Mustache.template_file = 'templates/html-bootstrap/template.mustache.html'
@@ -112,6 +114,7 @@ task :prepare do
     for section in chap["content"] 
       view = Mustache.new
       print "generating >> #{section['title']}\n"
+      view[:navfixed]      = true
       view[:items]  = BOOK_INDEX["chapters"]
       view[:chaps]  = BOOK_INDEX["chapters"]
       view[:show_toc] = true
