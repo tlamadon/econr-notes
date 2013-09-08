@@ -25,7 +25,7 @@ $$
 First we define the collocation. This is a list of values at which the
 constraint should be evaluated. At this point we do something very simple, 
 we define uniform grid between on $latex [0,1] $ and discretize it over 10 points.
-We also choose 3 discrete states for the variable $latex z$.
+We also choose 3 discrete states for the variable $z$.
 
 ```{r,results='hide',message=FALSE}
 require(mpeccable)
@@ -70,7 +70,7 @@ We can now look at the Jacobian of teh value function evaluated at the control v
   image(R@J)
 ```
 
-First we called `options(mpeccable.coloring=TRUE)` to tell `mpeccable` that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of $latex V $ with respect to the control variables $latex a^*_j$. There is exactly one control per state $latex (a_j,z_j)$.
+First we called `options(mpeccable.coloring=TRUE)` to tell `mpeccable` that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of $latex V $ with respect to the control variables $a^*_j$. There is exactly one control per state $(a_j,z_j)$.
 Then the left part has big blocks. This is because the control the spline is evaluated at the control variable for which we don't know ex-ante the value. Because the optimizer needs to know the structure from the begining, we need to be conservative and allow for any parameter of the spline to be entering a given state. However, some sparisty remains, because we know for sure that a $latex a_j$ from a given $latex z_j$ never enters a different $latex z_j$ hence the lbock diagonal.
 
 ### Define the utility and the low of motion for z

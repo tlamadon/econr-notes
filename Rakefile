@@ -53,6 +53,7 @@ directory OBJDIR
 # -------------------------
 rule '.md' => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('Rmd')) },'%d'] do |t|
     system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../#{t.source}');\""
+    system "sed -i '' 's/\$latex/\$/g' #{t.name}"
 end
 
 # COPY MARKDOWN => BUILD
