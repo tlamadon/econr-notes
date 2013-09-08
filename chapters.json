@@ -1,0 +1,40 @@
+{ "chapters": [
+  
+{ 
+  "title":"Introduction",
+  "key"  :"intro",
+  "content": [
+    {"key":"Intro","title":"Introduction"}
+  ]
+},
+
+{ 
+  "title":"Working with R",
+  "key"  :"workingwithr",
+  "content": [
+    {"key":"DataTable"   ,"title":"Working with data frames"},
+    {"key":"FortranAndR" ,"title":"Using Fortran"},
+    {"key":"BlitzExample","title":"Using C++ tensors"}
+  ]
+},
+
+{ 
+  "title":"Dynamic Progamming",
+  "key"  :"dynamicprograming",
+  "content": [
+    {"key":"chapter1","title":"Cake eating with MPEC"},
+    {"key":"savingRcppGSL","title":"Consumption saving"}
+  ]
+},
+
+{ 
+  "title":"Installation guides",
+  "key"  :"installation",
+  "content": [
+    {"key":"CompilingR3WithIntel","title":"Using intel compiler"},
+    {"key":"InstallRmpi","title":"Installing Rmpi"}
+  ]
+}
+
+  ]
+}

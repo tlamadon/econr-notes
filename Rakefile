@@ -1,13 +1,14 @@
 
 
-BOOK_CONTENT = [
-  "Intro",
-  "chapter1",
-  "DataTable",
-  "savingRcppGSL",
-  "FortranAndR",
-  "BlitzExample"
-]
+
+# BOOK_CONTENT = [
+#   "Intro",
+#   "chapter1",
+#   "DataTable",
+#   "savingRcppGSL",
+#   "FortranAndR",
+#   "BlitzExample"
+# ]
 
 # define a function that extracts the TOC
 # just pasrse the files and collect whatever
@@ -15,6 +16,15 @@ BOOK_CONTENT = [
 # the links.
 require 'rake/clean'
 require 'mustache'
+require './conf/utils.rb'
+
+BOOK_INDEX = load_book_structure('chapters.json')
+BOOK_CONTENT = []
+for chap in BOOK_INDEX["chapters"]
+  for section in chap["content"]
+    BOOK_CONTENT << section["key"]
+  end
+end
 
 OBJDIR = 'build'
 SRCDIR = 'content'
@@ -77,29 +87,44 @@ task :serve do
   system "ruby -run -e httpd -- -p 5000 ./build"
 end
 
+task :clean_html do
+  system "rm -rf ./build/*.html"
+end
 
+task :publish do
+  
+end
 # TESTING
 # =======
 
-
 task :prepare do
 
-  Mustache.template_file = 'templates/html-bootstrap/template.mustache.html'
+  Mustache.template_file = 'content/index.htmlfrag'
   view = Mustache.new
+  view[:items]  = BOOK_INDEX["chapters"]
+  File.open("build/" + "index.htmlfrag", 'w') { |file| file.write(view.render) }
 
-  for chap in BOOK_CONTENT
-      data = File.open("build/" + chap + ".htmlfrag", "rb") {|io| io.read}
+  Mustache.template_file = 'templates/html-bootstrap/template.mustache.html'
 
+  # process book content
+  for chap in BOOK_INDEX["chapters"]
+    print "generating #{chap['title']}\n"
+    for section in chap["content"] 
       view = Mustache.new
-      view[:items]  = [ { "name" => "topic 1"} , {"name" => "topic 2"} ]
-      view[:chaps]  = [ { "name" => "DataTable", "link" => "DataTable.html"} , 
-                        { "name" => "Consumption Saving Model", "link" => "savingRcppGSL.html"},
-                        { "name" => "Blitz Example", "link" => "BlitzExample.html"},
-                        { "name" => "Fortran And R", "link" => "FortranAndR.html"} ]
-      view[:content] = data
-
-      File.open("build/" + chap + ".html", 'w') { |file| file.write(view.render) }
+      print "generating >> #{section['title']}\n"
+      view[:items]  = BOOK_INDEX["chapters"]
+      view[:chaps]  = BOOK_INDEX["chapters"]
+      view[:show_toc] = true
+      process_section(view, section["key"])      
+    end        
   end
+
+  view = Mustache.new
+  print "generating >> index.html\n"
+  view[:items]  = BOOK_INDEX["chapters"]
+  view[:chaps]  = BOOK_INDEX["chapters"]
+  view[:show_toc] = false
+  process_section(view, "index")      
 
 end
 

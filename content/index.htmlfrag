@@ -1,0 +1,22 @@
+
+
+<div class="hero-unit">
+  <h1>Welcome to EconR</h1>
+  <p>This is a collection of methods to do economics in R and C++/Fortran. The emphasis is on  writing efficient code to solve and estimate quantitative economic models.</p>
+</div>
+
+<div class="row">
+<div class="span8 offset1">
+<h2> Table of content </h2>
+<ul> 
+{{#items}}
+<li>{{title}}</li>
+<ul>
+{{#content}}
+<li><a href="{{key}}.html">{{title}}</a></li>
+{{/content}}
+</ul>
+{{/items}}
+</ul>
+</div>
+</div>   

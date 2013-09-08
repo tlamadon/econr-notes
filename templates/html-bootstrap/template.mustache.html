@@ -59,18 +59,18 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="#">Econ Notes</a>
+          <a class="brand" href="/index.html">EconR.org</a>
           <div class="nav-collapse collapse">
             <p class="navbar-text pull-right">
               source on  <a href="https://github.com/tlamadon/econr-notes" class="navbar-link">github</a>
             </p>
             <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
+              <li class="active"><a href="/index.html">Home</a></li>
               <li class="dropdown">
                       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Chapters <b class="caret"></b></a>
                       <ul class="dropdown-menu">
                         {{#chaps}}
-                          <li><a href="{{link}}">{{name}}</a></li>
+                          <li><a href="{{key}}.html">{{title}}</a></li>
                         {{/chaps}}
                       </ul>
                   </li>
@@ -83,12 +83,15 @@
 
     <div class="container-fluid">
       <div class="row-fluid">
+        {{#show_toc}}
         <div class="span3">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
               {{#items}}
-              <li class="nav-header">{{name}}</li>
-              <li><a href="#">Link</a></li>
+              <li class="nav-header">{{title}}</li>
+              {{#content}}
+              <li><a href="{{key}}.html">{{title}}</a></li>
+              {{/content}}
               {{/items}}
             </ul>
           </div><!--/.well -->
@@ -96,12 +99,20 @@
         <div class="span9">
             {{{content}}}
         </div><!--/span-->
+        {{/show_toc}}        
+        {{^show_toc}}
+           {{{content}}}
+        {{/show_toc}}
+
+
       </div><!--/row-->
 
       <hr>
 
       <footer>
+        <center>
         <p>Thibaut Lamadon and Florian Oswald</p>
+        </center>
       </footer>
 
     </div><!--/.fluid-container-->
