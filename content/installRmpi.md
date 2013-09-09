@@ -5,7 +5,7 @@
 
 ## load the right modules
 
-1. module add openmp/gcc
+1. module add openmpi/gcc
 2. module add r
 
 This loads the most recent version of R, which is probably what you want. If you want a specific version x.y, load r/x.y.

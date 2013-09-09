@@ -1,7 +1,7 @@
 Solving a simple 2-period Consumption problem with RcppGSL
 ========================================================
 
-In this example we demonstrate how to solve the following problem using the RcppGSL package. GSL is the [[GNU scientific library]](https://www.gnu.org/software/gsl/) and has many useful functions written in C++. RcppGSL is the Rcpp interface for R. Please look at the separate chapter "how to install RcppGSL" as that needs a trick or two.
+In this example we demonstrate how to solve the following problem using the RcppGSL package. GSL is the [GNU scientific library](https://www.gnu.org/software/gsl/) and has many useful functions written in C++. RcppGSL is the Rcpp interface for R. Please look at the separate chapter "how to install RcppGSL" as that needs a trick or two.
 
 ## problem
 
@@ -10,7 +10,9 @@ $$ \begin{array}{ccc} max_x &\log(a - x) + \beta log(x) \\
                            &a \in {2,3,\dots,10}
                      \end{array}$$
 
-This is the simplest problem one could try to solve. to add at least some realism, we will linearly interpolate the "future value" $ log(x) $, as our problems most of the times do not admit a closed form of this object.
+We have a two-period problem of a consumer who has a cake of size $ a $ and needs to decide how much to consume today and how much to leave for tomorrow. The choice of how much to save, $ x $, is a continuous variable; The size of the cake today is continuous as well, but we measure it only a set of discrete points. If we are interested at the value of having a cake size of, say, $ a = 2.7 $, we can use an interpolation technique to compute this value.
+
+This is very simple problem. To add at least some realism, we will linearly interpolate the "future value" $ log(x) $. This should mimic a more realistic situation when our model does not admit a closed form of this object.
 
 ### Solution
 
@@ -33,10 +35,6 @@ library(RcppGSL)
 ## Loading required package: Rcpp
 ```
 
-```
-## Warning: package 'Rcpp' was built under R version 2.15.3
-```
-
 ```r
 library(inline)
 ```
@@ -46,21 +44,16 @@ library(inline)
 ```
 
 ```
-## The following object(s) are masked from 'package:Rcpp':
+## The following object is masked from 'package:Rcpp':
 ## 
 ## registerPlugin
 ```
 
 ```r
 
-# there is some weird thing going on with assets here.  it seems the
-# C-function modifies the values of the assets object in R now idea why
-# that happens. create a second object assets2 just to be sure.
-
 # define asset and savings grid
-assets <- seq(2, 10, le = 9)
-assets2 <- seq(2, 10, le = 9)
-saving <- seq(0.1, 11, le = 50)
+a <- seq(2, 10, le = 9)
+x <- seq(0.1, 11, le = 50)
 
 Beta <- 0.95
 verbose <- FALSE  # set FALSE to supress printing the trace of the optimizer
@@ -70,6 +63,12 @@ verbose <- FALSE  # set FALSE to supress printing the trace of the optimizer
 ### Rcpp Inline
 
 We will use the inline package to write C source code inline. Then we compile the source in place to a C function, and we call it from R. See chapter "intro to Rcpp".
+
+### GSL
+
+It is useful to get familiar with the funcionality of the GSL library first. Please have a look around the manual of GSL relating to [one-dimensional minization](https://www.gnu.org/software/gsl/manual/html_node/One-dimensional-Minimization.html#One-dimensional-Minimization). In particular the setting up of the various objects can be a bit confusing initially. We are basically presenting a modified version of the example shown on that page.
+
+### RcppGSL
 
 First, define a string "inc" to be our personal header file for the C function:
 
@@ -104,7 +103,7 @@ double my_obj( double x, void *p){
 
 	res = a - x;	//current resources
 
-  // if consumption negative, very large value
+  // if consumption negative, very large penalty value
 	if (res<0) {
 		out =  1e9;
 	} else {
@@ -119,39 +118,55 @@ double my_obj( double x, void *p){
 
 ### testing the objective function
 
-here's a code snippet that will print the value of the ojbective at different asset and savings states:
+It's very important to always check the objective function. here's a code snippet that will print the value of the objective at different asset and savings states:
 
 
 ```r
 src <- '
-NumericVector a(a_);
-NumericVector aa(aa_);
+NumericVector a(a_);	// a has the same memory address as a_
+NumericVector x(x_);
 double beta  = as<double>(beta_);
-NumericVector ay = log(aa);  // future values
+NumericVector ay = log(x);  // future values
 
-int m = aa.length();
+int m = x.length();
 int n = a.length();
 
+// R is the matrix of return values
 NumericMatrix R(n,m);
 
+//initiate gsl interpolation object
 gsl_interp_accel *accP = gsl_interp_accel_alloc() ;
 gsl_interp *linP = gsl_interp_alloc( gsl_interp_linear , m );
-gsl_interp_init( linP, aa.begin(), ay.begin(), m );
+gsl_interp_init( linP, x.begin(), ay.begin(), m );
 
 gsl_function F;
 
+//point to our objective function
 F.function = &my_obj;
 
+// --------------------------------
+// loop over rows of R: values of a
+// --------------------------------
+
 for (int i=0;i < a.length(); i++){
-  // define the struct on that state
-	struct my_f_params params = {a(i),beta,linP,accP,aa,ay};
+
+  // define the struct on that state:
+  // notice that the value of the state a(i) changes
+	struct my_f_params params = {a(i),beta,linP,accP,x,ay};
 	F.params   = &params;
+
+  // uncomment those lines to print intermediate values
 	//Rcout << "asset state :" << i << std::endl;
 	//Rcout << "asset value :" << a(i) << std::endl;
+
+  // --------------------------------
+  // loop over cols of R: values of x
+  // --------------------------------
+
 	for (int j=0; j < m; j++) {
-		//Rcout << "saving value :" << aa(j) << std::endl;
-		//Rcout << GSL_FN_EVAL(&F,aa(j)) << std::endl;
-    R(i,j) = GSL_FN_EVAL(&F,aa(j));
+		//Rcout << "saving value :" << x(j) << std::endl;
+		//Rcout << GSL_FN_EVAL(&F,x(j)) << std::endl;
+    R(i,j) = GSL_FN_EVAL(&F,x(j));
 	}
     
 }
@@ -159,32 +174,43 @@ return wrap(R);
 '
 
 # here we compile the c function:
-testf=cxxfunction(signature(a_="numeric",aa_="numeric",beta_="numeric"),body=src,plugin="RcppGSL",includes=inc)
+testf=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric"),body=src,plugin="RcppGSL",includes=inc)
+```
+
+```
+## ld: warning: directory not found for option '-L/usr/local/lib/gcc/i686-apple-darwin8/4.2.3/x86_64'
+## ld: warning: directory not found for option '-L/usr/local/lib/gcc/i686-apple-darwin8/4.2.3'
+```
+
+```r
 
 # here we call it
-res1 <- testf(a_=assets,aa_=saving,beta_=Beta)
-tmp = res1  
-tmp[tmp==1e9] = NA  # the value 1e9 stands for "not feasible"
-persp(tmp,theta=100,main="objective function",ticktype="detailed",x=assets,y=saving,zlab="objective function value")
+res1 <- testf(a_=a,x_=x,beta_=Beta)
+res1[res1==1e9] = NA  # the value 1e9 stands for "not feasible"
+persp(res1,theta=100,main="objective function",ticktype="detailed",x=a,y=x,zlab="objective function value")
 ```
 
 ![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
 
 
+
 ### Setup the optimizer 
 
-this is a bit messy. needs much more commenting:
+Now that we are more or less convinced that the objective returns sensible values, we can setup the optimizer. In terms of the above picture, for every value of `a` on the right axis, we want to pick different values of `x` and find the one that makes the objective function **smallest**. 
 
 
 ```r
 src2 <- '
 // map values from R
 NumericVector a(a_);
-NumericVector aa(aa_);
+NumericVector x(x_);
 double beta = as<double>(beta_);
 bool verbose = as<bool>(verbose_);
-NumericVector ay = log(aa);  // future values
-NumericVector R(a_);
+NumericVector ay = log(x);  // future values
+
+int na = a.length();
+
+NumericVector R(na);   // allocate a return vector
 
 // optimizer setup
 int status;
@@ -192,14 +218,14 @@ int iter=0,max_iter=100;
 const gsl_min_fminimizer_type *T;
 gsl_min_fminimizer *s;
 
-int k = aa.length();
+int k = x.length();
 
 gsl_interp_accel *accP = gsl_interp_accel_alloc() ;
 gsl_interp *linP       = gsl_interp_alloc( gsl_interp_linear , k );
-gsl_interp_init( linP, aa.begin(), ay.begin(), k );
+gsl_interp_init( linP, x.begin(), ay.begin(), k );
 
 // parameter struct
-struct my_f_params params = {a(0),beta,linP,accP,aa,ay};
+struct my_f_params params = {a(0),beta,linP,accP,x,ay};
 
 // gsl objective function
 gsl_function F;
@@ -207,7 +233,7 @@ F.function = &my_obj;
 F.params   = &params;
 
 // bounds on choice variable
-double low = aa(0), up=aa(k-1);
+double low = x(0), up=x(k-1);
 double m = 0.2;	//current minium
 
 // create an fminimizer object of type "brent"
@@ -224,13 +250,13 @@ for (int i=0;i < a.length(); i++){
 	// i, need to allocate linP(i) here and then load into
 	// params
 
-	struct my_f_params params = {a(i),beta,linP,accP,aa,ay};
+	struct my_f_params params = {a(i),beta,linP,accP,x,ay};
 	F.params   = &params;
 
 	// if optimization bounds change do that here
 
-	low = aa(0); 
-	up=aa(k-1);
+	low = x(0); 
+	up=x(k-1);
 	iter=0;	// reset iterator for each state
     m = 0.2; // reset minimum for each state
 
@@ -275,7 +301,15 @@ return wrap(R);
 
 
 ```r
-f2=cxxfunction(signature(a_="numeric",aa_="numeric",beta_="numeric",verbose_="logical"),body=src2,plugin="RcppGSL",includes=inc)
+f2=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric",verbose_="logical"),body=src2,plugin="RcppGSL",includes=inc)
+```
+
+```
+## ld: warning: directory not found for option '-L/usr/local/lib/gcc/i686-apple-darwin8/4.2.3/x86_64'
+## ld: warning: directory not found for option '-L/usr/local/lib/gcc/i686-apple-darwin8/4.2.3'
+```
+
+```r
 
 # setup a wrapper to call. optional
 myfun <- function(ass,sav,Beta,verbose){
@@ -283,7 +317,7 @@ myfun <- function(ass,sav,Beta,verbose){
 	return(res)
 }
 
-myres <- myfun(assets,saving,Beta,verbose)
+myres <- myfun(a,x,Beta,verbose)
 ```
 
 
@@ -293,10 +327,10 @@ we can compare the analytical solution to the one we found by just plotting the 
 
 
 ```r
-plot(assets2, assets2 * Beta/(1 + Beta), col = "red")
-lines(assets2, myres)
-legend("bottomright", legend = c("true", "approx"), lty = c(1, 1), 
-    col = c("red", "black"))
+plot(a, a * Beta/(1 + Beta), col = "red")
+lines(a, myres)
+legend("bottomright", legend = c("true", "approx"), lty = c(1, 1), col = c("red", 
+    "black"))
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
@@ -306,7 +340,7 @@ legend("bottomright", legend = c("true", "approx"), lty = c(1, 1),
 
 
 ```r
-print(max(assets2 * Beta/(1 + Beta) - myres))
+print(max(a * Beta/(1 + Beta) - myres))
 ```
 
 ```
