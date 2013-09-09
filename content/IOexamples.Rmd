@@ -1,0 +1,43 @@
+
+# Some In/Out examples
+
+This chapter gives some examples of how to pass values from R to cpp and vice versa. There is a high degree of flexibility.
+
+## Pass a list
+
+A list can contain different classes of objects. here we want to pass the following list to a C++ function which does nothing else but returning all the objects with a slightly different name in a newly created list.
+
+```{r,tidy=FALSE}
+mylist = list(A = array(1:10,c(10,1)),
+			  a = pi,
+			  b = FALSE,
+			  C = matrix(rnorm(20),4,5))
+```
+
+You can see that have 4 different classes here: a vector, a double, a boolean and a matrix. Let's pass it to C++:
+
+
+```{r,tidy=FALSE,message=FALSE}
+library(Rcpp)
+library(inline)
+
+src2 <- '
+	List l(inlist);
+	NumericVector one = as<NumericVector>(l["A"]);
+	double two = as<double>(l["a"]);
+	bool three = as<bool>(l["b"]);
+	NumericMatrix four = as<NumericMatrix>(l["C"]);
+	// do something useful here
+	// ...
+	// put together into a list
+	// notice: if not using the inline package, must declare
+	// namespace Rcpp, or prepend all Rcpp functions with
+	// Rcpp::
+	List outlist = List::create( _["A.out"] = one, _["a.out"] = two, _["b.out"] = three, _["C.out"] = four);
+	return outlist;
+	'
+
+f3 <- cxxfunction(signature(inlist="List"),body=src2,plugin="Rcpp")
+
+f3(inlist=mylist)
+```
