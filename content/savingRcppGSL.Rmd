@@ -10,7 +10,7 @@ $$ \begin{array}{ccc} max_x &\log(a - x) + \beta log(x) \\
                            &a \in {2,3,\dots,10}
                      \end{array}$$
 
-We have a two-period problem of a consumer who has a cake of size $ a $ and needs to decide how much to consume today and how much to leave for tomorrow. The choice of how much to save, $ x $, is a continuous variable; The size of the cake today is continuous as well, but we measure it only a set of discrete points. If we are interested at the value of having a cake size of, say, $ a = 2.7 $, we can use an interpolation technique to compute this value.
+We have a two-period problem of a consumer who has a cake of size $ a $ and needs to decide how much to consume today and how much to leave for tomorrow. The choice of how much to save, $ x $ , is a continuous variable; The size of the cake today is continuous as well, but we measure it only a set of discrete points. If we are interested at the value of having a cake size of, say, $ a = 2.7 $, we can use an interpolation technique to compute this value.
 
 This is very simple problem. To add at least some realism, we will linearly interpolate the "future value" $ log(x) $. This should mimic a more realistic situation when our model does not admit a closed form of this object.
 

@@ -49,8 +49,8 @@ directory OBJDIR
 # FILE PROCESSING RULES
 # =====================
 
-# RMD  =>   MD
-# -------------------------
+# RMD  =>   MD  (  chap.md depends on cha.Rmd)
+# --------------------------------------------
 rule '.md' => [ proc { |tn| File.join(SRCDIR, File.basename(tn).ext('Rmd')) },'%d'] do |t|
     system "cd build; Rscript -e \"options(encoding='UTF-8'); require(knitr); knit('../#{t.source}');\""
     system "sed -i '' 's/\$latex/\$/g' #{t.name}"
@@ -93,7 +93,7 @@ task :clean_html do
 end
 
 task :publish do
-  system "rsync"
+  system "cd build; rsync -avze ssh ./ zadigh@mirfak.dreamhost.com:/home/zadigh/econr.org/public"
 end
 # TESTING
 # =======
