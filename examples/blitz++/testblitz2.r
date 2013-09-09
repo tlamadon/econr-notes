@@ -13,6 +13,8 @@ using namespace blitz;
 // in objects
 Rcpp::NumericVector A(A_);
 Rcpp::NumericVector A2(A2_);
+Rcpp::NumericVector S(S_);
+
 // out objects
 Rcpp::NumericVector Vout(A.length());
 Rcpp::NumericVector Dout(A.length());
@@ -26,17 +28,25 @@ Rcpp::IntegerVector d2 = A2.attr("dim");
 blitz::Array<double,3> B1(A.begin(), shape(d1(0),d1(1),d1(2)), neverDeleteData, FortranArray<3>());
 blitz::Array<double,3> B2(A2.begin(), shape(d2(0),d2(1),d2(2)), neverDeleteData, FortranArray<3>());
 
+// create a blitz savings cube
+// has same dimensions as B1
+blitz::Array<double,3> SS(S.begin(), shape(d1(0),d1(1),d1(2)), neverDeleteData, FortranArray<3>());
+
 // declare blitz dimension descriptors
 firstIndex  i;
 secondIndex  j;
 thirdIndex  k;
+
+// compute U - savings for each option
+B1 = B1 - SS;
+B2 = B2 - SS;
 
 // create to "value functions" to store values after maximizing
 // over the third dimension of B1 and B2
 blitz::Array<double,2> V1(d1(0),d1(1),FortranArray<2>());
 blitz::Array<double,2> V2(d1(0),d1(1),FortranArray<2>());
 
-// maximize over third dim
+// find maximal value
 V1 = max(B1,k);
 V2 = max(B2,k);
 
@@ -46,7 +56,7 @@ blitz::Array<double,2> Dmax(Dout.begin(), shape(d2(0),d2(1)), neverDeleteData,Fo
 
 // take discrete choice
 Vmax = where(V1 > V2, V1, V2);
-Dmax = where(V1 > V1, 1, 2);
+Dmax = where(V1 > V2, 1, 2);
 
 // copy to NumericVectors
 Vout = Vmax;
@@ -60,19 +70,25 @@ Rcpp::List list = Rcpp::List::create( _["vmax"] = Vout, _["dchoice"] = Dout);
 return list;
 '
 
-A = array(1:60,c(2,5,6))
-A2 = array(120:60,c(2,5,6))
-V = array(0,c(2,5))
+# two "options":
+x  <- sample(1:120,size=120,replace=F)
+A  <- array(x[1:60],c(2,5,6))
+A2 <- array(x[61:100],c(2,5,6))
+S  <- array(runif(n=60),c(2,5,6))
+V  <- array(0,c(2,5))
 
-f2 = cxxfunction(signature(A_="numeric",A2_="numeric"),body=src,plugin="Rcpp",includes=inc)
-result = f2(A,A2)
+f2 = cxxfunction(signature(A_="numeric",A2_="numeric",S_="numeric"),body=src,plugin="Rcpp",includes=inc)
+result = f2(A,A2,S)
+
 cat('blitz++ result:\n')
 print(result)
 
 # R result
 r = list()
-V1 = apply(A,c(1,2),max)
-V2 = apply(A2,c(1,2),max)
+As <- A - S
+A2s <- A2 - S
+V1 = apply(As,c(1,2),max)
+V2 = apply(A2s,c(1,2),max)
 V12 = array(c(V1,V2),c(2,5,2))
 r$vmax = apply(V12,c(1,2),max)
 r$dchoice = apply(V12,c(1,2),which.max)
