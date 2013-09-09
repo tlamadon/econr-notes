@@ -93,7 +93,7 @@ task :clean_html do
 end
 
 task :publish do
-  system "rsync"
+  system "cd build; rsync -avze ssh ./ zadigh@mirfak.dreamhost.com:/home/zadigh/econr.org/public"
 end
 # TESTING
 # =======
