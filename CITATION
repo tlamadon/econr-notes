@@ -1,0 +1,10 @@
+citHeader("To cite econR in your work, please use:")
+
+bibentry(bibtype = "book",
+  author = as.person("Thibaut Lamadon [aut], Florian Oswald [aut]"),
+  title = "EconR - methods to solve and estimate quantitative economic models",
+  url = "http://www.econr.org/",
+  year = "2013",
+  textVersion = "T. Lamdon and F. Oswald. EconR - methods to solve and estimate quantitative economic models. 2013."
+)
+
