@@ -15,12 +15,15 @@ Rcpp::NumericVector A(A_);
 Rcpp::NumericVector A2(A2_);
 Rcpp::NumericVector S(S_);
 
-// out objects
-Rcpp::NumericVector Vout(A.length());
-Rcpp::NumericVector Dout(A.length());
 // read dimension attribute of IN arrays
 Rcpp::IntegerVector d1 = A.attr("dim");
 Rcpp::IntegerVector d2 = A2.attr("dim");
+
+// out objects
+// need to be able to store all values 
+// in first 2 dims of A
+Rcpp::NumericVector Vout(d1(0)*d1(1));
+Rcpp::NumericVector Dout(d1(0)*d1(1));
 
 // create 2 blitz cubes B1 and B2
 // Note that by default, Blitz arrays are row-major. 
@@ -58,7 +61,7 @@ blitz::Array<double,2> Dmax(Dout.begin(), shape(d2(0),d2(1)), neverDeleteData,Fo
 Vmax = where(V1 > V2, V1, V2);
 Dmax = where(V1 > V2, 1, 2);
 
-// copy to NumericVectors
+// copy to NumericVectors out objects
 Vout = Vmax;
 Dout = Dmax;
 
@@ -99,3 +102,4 @@ print(r)
 
 cat('all.equal?\n')
 print(all.equal(result,r))
+
