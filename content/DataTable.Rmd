@@ -100,7 +100,7 @@ dd[,y.l2 := dd[list(i,t-1)][["y"]]] # just add the "y" column of that to dd by r
 dd[,all.equal(y.l1,y.l2)]
 ```
 
-You can see that this already produces the desired result: the value of `y`
+You can see that this already produces the desired result: the value of `y`.
 
 
 
