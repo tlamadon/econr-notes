@@ -12,9 +12,10 @@
   "title":"Working with R",
   "key"  :"workingwithr",
   "content": [
-    {"key":"DataTable"   ,"title":"Working with data frames"},
-    {"key":"FortranAndR" ,"title":"Using Fortran"},
-    {"key":"BlitzExample","title":"Using C++ tensors"}
+    {"key":"DataTable"   ,"title":"Working with data table"},
+    {"key":"IOexamples","title":"Using IO in C++"},
+    {"key":"BlitzExample","title":"Using C++ tensors"},
+    {"key":"FortranAndR" ,"title":"Using Fortran"}
   ]
 },
 
