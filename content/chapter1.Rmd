@@ -12,12 +12,12 @@ uncertainty. We consider 3 state of the world index by `z`. In state `z`  the ag
 recieved `z` amounts of apple. 
 
 Each period the agent decides how much to consume and how much to save. The agent discounts 
-the future at rate $latex r$ and earns the same interest on savings. We use `log` utility.
+the future at rate $latex r$ and earns the same interest on savings. We use CRRA utility function.
 
 The dynamic problem is simply represented using $latex V_z(\cdot):\mathbb{R}\times\mathbb{N} \to \mathbb{R}$ implicitely defined by the following Bellman equation:
 
 $$latex
-  V_z(a) = \max_{a'} u((1+r) a -a') + \frac{1}{1+r} E_{z'|z} V_{z'}(a')
+  V_z(a) = \max_{a'} u((1+r) a + z -a') + \frac{1}{1+r} E_{z'|z} V_{z'}(a')
 $$
 
 ### The collocation
@@ -62,7 +62,7 @@ Using the `FDiff` function I can easily do that and generate this control variab
 
 ### Our first Jacobian
 
-We can now look at the Jacobian of teh value function evaluated at the control variable:
+We can now look at the Jacobian of the value function evaluated at the control variable:
 
 ```{r, simpleplot,fig.align='center'}
   options(mpeccable.coloring=TRUE)
@@ -70,7 +70,7 @@ We can now look at the Jacobian of teh value function evaluated at the control v
   image(R@J)
 ```
 
-First we called `options(mpeccable.coloring=TRUE)` to tell `mpeccable` that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The righ of the figure contains a diagonal matrix. This represents the derivative of $latex V $ with respect to the control variables $a^*_j$. There is exactly one control per state $(a_j,z_j)$.
+First we called `options(mpeccable.coloring=TRUE)` to tell `mpeccable` that we don't want th actual values of the Jacobian, but we just want to know what parts are potentially non zero. The right of the figure contains a diagonal matrix. This represents the derivative of $latex V $ with respect to the control variables $a^*_j$. There is exactly one control per state $(a_j,z_j)$.
 Then the left part has big blocks. This is because the control the spline is evaluated at the control variable for which we don't know ex-ante the value. Because the optimizer needs to know the structure from the begining, we need to be conservative and allow for any parameter of the spline to be entering a given state. However, some sparisty remains, because we know for sure that a $latex a_j$ from a given $latex z_j$ never enters a different $latex z_j$ hence the lbock diagonal.
 
 ### Define the utility and the low of motion for z
@@ -102,7 +102,7 @@ $$
 
 ```{r, simpleplot3,fig.align='center'}
 R2 =  Up - 0.95*V(a_,z1,g.,deriv=1)
-image(R@J)
+image(R2@J)
 ```
 
 ### Combine all the constraints
