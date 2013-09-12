@@ -14,6 +14,7 @@
   "content": [
     {"key":"DataTable"   ,"title":"Working with data table"},
     {"key":"IOexamples","title":"Using IO in C++"},
+    {"key":"RandomGSL","title":"Random numbers with GSL"},
     {"key":"BlitzExample","title":"Using C++ tensors"},
     {"key":"FortranAndR" ,"title":"Using Fortran"}
   ]
