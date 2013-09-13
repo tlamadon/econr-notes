@@ -1,5 +1,5 @@
 Solving a simple 2-period Consumption problem with RcppGSL
-========================================================
+==========================================================
 
 In this example we demonstrate how to solve the following problem using the RcppGSL package. GSL is the [GNU scientific library](https://www.gnu.org/software/gsl/) and has many useful functions written in C++. RcppGSL is the Rcpp interface for R. Please look at the separate chapter "how to install RcppGSL" as that needs a trick or two.
 
@@ -25,6 +25,15 @@ $$ \begin{array}{cccc} \frac{1}{a-x}        &=& \beta \frac{1}{x} \\
                      \end{array} $$
                      
 which implies that savings $x$ are a constant fraction of current assets.
+
+We will use 2 approaches to solve this problem: 
+
+1. directly optimize the objective function
+2. solve for a root of the first order condition
+
+## Approach 1: Maximize the objective function
+
+In this approach we want to choose $x$ to directly maximize $ \log(a - x) + \beta log(x) $ .
 
 ```{r}
 library(RcppGSL)
@@ -64,7 +73,9 @@ struct my_f_params { double a; double beta; const gsl_interp *myint; gsl_interp_
 // minimizes a function. we multiply return values with -1 to fix that.
 
 double my_obj( double x, void *p){
-  struct my_f_params *params = (struct my_f_params *)p;
+
+	// define the paramter struct
+    struct my_f_params *params = (struct my_f_params *)p;
 	double a                   = (params->a);
 	double beta                = (params->beta);
 	const gsl_interp *myint    = (params->myint);
@@ -80,7 +91,7 @@ double my_obj( double x, void *p){
 
 	res = a - x;	//current resources
 
-  // if consumption negative, very large penalty value
+    // if consumption negative, very large penalty value
 	if (res<0) {
 		out =  1e9;
 	} else {
@@ -114,10 +125,17 @@ gsl_interp_accel *accP = gsl_interp_accel_alloc() ;
 gsl_interp *linP = gsl_interp_alloc( gsl_interp_linear , m );
 gsl_interp_init( linP, x.begin(), ay.begin(), m );
 
+// initiate a struct with params
+struct my_f_params params = {a(0),beta,linP,accP,x,ay};
+
+// initiate the gsl objective function
 gsl_function F;
 
 //point to our objective function
 F.function = &my_obj;
+
+// point my_f_params struct "params" to F
+F.params   = &params;
 
 // --------------------------------
 // loop over rows of R: values of a
@@ -125,18 +143,16 @@ F.function = &my_obj;
 
 for (int i=0;i < a.length(); i++){
 
-  // define the struct on that state:
-  // notice that the value of the state a(i) changes
-	struct my_f_params params = {a(i),beta,linP,accP,x,ay};
-	F.params   = &params;
+    // notice that the value of the state a(i) changes
+    params.a = a(i);
 
-  // uncomment those lines to print intermediate values
+    // uncomment those lines to print intermediate values
 	//Rcout << "asset state :" << i << std::endl;
 	//Rcout << "asset value :" << a(i) << std::endl;
 
-  // --------------------------------
-  // loop over cols of R: values of x
-  // --------------------------------
+    // --------------------------------
+    // loop over cols of R: values of x
+    // --------------------------------
 
 	for (int j=0; j < m; j++) {
 		//Rcout << "saving value :" << x(j) << std::endl;
@@ -213,8 +229,8 @@ for (int i=0;i < a.length(); i++){
 	// i, need to allocate linP(i) here and then load into
 	// params
 
-	struct my_f_params params = {a(i),beta,linP,accP,x,ay};
-	F.params   = &params;
+    // notice that the value of the state a(i) changes
+    params.a = a(i);
 
 	// if optimization bounds change do that here
 
@@ -262,7 +278,8 @@ return wrap(R);
 #### compiling the C function
 
 ```{r,tidy=FALSE}
-f2=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric",verbose_="logical"),body=src2,plugin="RcppGSL",includes=inc)
+f2=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric",verbose_="logical"),
+			   body=src2,plugin="RcppGSL",includes=inc)
 
 # setup a wrapper to call. optional
 myfun <- function(ass,sav,Beta,verbose){
@@ -288,3 +305,213 @@ legend("bottomright",legend=c("true","approx"),lty=c(1,1),col=c("red","black"))
 ```{r}
 print(max(a * Beta/(1+Beta) -myres))
 ```
+
+
+## Approach 2: Solve for a Root of the first order condition
+
+In this example this is a bit pointless, since as we have mentioned there is a closed form solution to the first order condition.
+Rememember the equation is 
+
+$$ x - \beta (a - x ) = 0 $$
+
+We will illustrate the GSL root solver to find $ x $ which satisfies this equation. The steps to take are very similar to approach 1 above,
+but there are some subtle differences we have to keep in mind. We begin again with an include file, where we define the changed objective
+function. Notice also that the required gsl `include` has changed:
+
+
+```{r,tidy=FALSE}
+inc <- '
+#include <gsl/gsl_roots.h>
+
+// this struct will hold parameters we need in the objective
+struct my_f_params { double a; double beta; };
+
+double my_obj( double x, void *p){
+    struct my_f_params *params = (struct my_f_params *)p;
+	double a                   = (params->a);
+	double beta                = (params->beta);
+        
+	double res;
+
+	res = x - beta*(a - x);
+	return res;
+}
+
+// define root solver wrapper
+double find_root(gsl_root_fsolver *s, gsl_function * F, double a, double b) {
+  int iter = 0, max_iter = 100 ,status;
+  double r, x_lo,x_hi;
+
+  gsl_root_fsolver_set (s, F, a, b);
+  do {
+    iter++;
+    status = gsl_root_fsolver_iterate (s);
+    r      = gsl_root_fsolver_root (s);
+    x_lo   = gsl_root_fsolver_x_lower (s);
+    x_hi   = gsl_root_fsolver_x_upper (s);
+    status = gsl_root_test_interval (x_lo, x_hi,
+                                     0, 0.001);
+    // if (status == GSL_SUCCESS)
+    //   printf ("Converged:\\n");
+    //
+    // printf ("%5d [%.7f, %.7f] %.7f %+.7f %.7f\\n",
+    //         iter, x_lo, x_hi,
+    //         r, r - r_expected, 
+    //         x_hi - x_lo);
+  } while (status == GSL_CONTINUE && iter < max_iter);
+
+  return( (x_lo + x_hi)/2.0);
+}
+'
+```
+
+### Objective Function Test 2
+
+We again test our objective function. 
+
+```{r,tidy=FALSE}
+src <- '
+NumericVector a(a_);	// a has the same memory address as a_
+NumericVector x(x_);
+double beta  = as<double>(beta_);
+
+int m = x.length();
+int n = a.length();
+
+// R is the matrix of return values
+NumericMatrix R(n,m);
+
+// param struct
+struct my_f_params params = {a(0),beta};
+
+// gsl objective function
+gsl_function F;
+
+//point to our objective function
+F.function = &my_obj;
+F.params   = &params;
+
+// --------------------------------
+// loop over rows of R: values of a
+// --------------------------------
+
+for (int i=0;i < a.length(); i++){
+
+  // define the struct on that state:
+  // notice that the value of the state a(i) changes
+	params.a = a(i);
+
+  // uncomment those lines to print intermediate values
+	//Rcout << "asset state :" << i << std::endl;
+	//Rcout << "asset value :" << a(i) << std::endl;
+
+  // --------------------------------
+  // loop over cols of R: values of x
+  // --------------------------------
+
+	for (int j=0; j < m; j++) {
+		//Rcout << "saving value :" << x(j) << std::endl;
+		//Rcout << GSL_FN_EVAL(&F,x(j)) << std::endl;
+    R(i,j) = GSL_FN_EVAL(&F,x(j));
+	}
+    
+}
+return wrap(R);
+'
+```
+
+We can make a nice plot with the rgl package. Notice that the objective (red) crosses the value of zero (the blue plane) at every state. This is important, since it tells us that at every state there exists a solution to this problem.
+
+```{r,message=FALSE}
+library(rgl)
+knit_hooks$set(rgl = hook_rgl)
+```
+
+```{r,rgl=TRUE}
+testf=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric"),body=src,plugin="RcppGSL",includes=inc)
+
+# call the test 
+ res1 <- testf(a_=a,x_=x,beta_=Beta)
+
+open3d()
+surface3d(a,x,res1*0.3,color="red",alpha=0.8)  # scaled res1
+axes3d(labels=FALSE,tick=FALSE)
+planes3d(a=0,b=0,c=-1,d=0,color="blue",alpha=0.8)
+view3d(theta=0,-70)
+```
+
+### Solve the optimization problem
+
+```{r,tidy=FALSE}
+src2 <- '
+// map values from R
+NumericVector a(a_);
+NumericVector x(x_);
+double beta = as<double>(beta_);
+bool verbose = as<bool>(verbose_);
+NumericVector ay = log(x);  // future values
+
+int na = a.length();
+
+NumericVector R(na);   // allocate a return vector
+
+// optimizer setup
+int status;
+int iter=0,max_iter=100;
+
+int k = x.length();
+
+// initialize the root finder
+const gsl_root_fsolver_type *T2 = gsl_root_fsolver_brent;
+gsl_root_fsolver *rootfinder    = gsl_root_fsolver_alloc (T2);
+
+// parameter struct
+struct my_f_params params = {a(0),beta};
+
+// gsl objective function
+gsl_function F;
+F.function = &my_obj;
+F.params   = &params;
+
+// bounds on choice variable
+double low = x(0), up=x(k-1);
+double root;
+
+// loop over states
+for (int i=0;i < a.length(); i++){
+
+	params.a = a(i);
+
+	root = find_root( rootfinder, &F, low, up);
+	
+	R(i) = root;
+}
+gsl_root_fsolver_free( rootfinder );
+return wrap(R);
+'
+
+f2=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric",verbose_="logical"),
+			   body=src2,plugin="RcppGSL",includes=inc)
+
+# setup a wrapper to call. optional
+myfun <- function(ass,sav,Beta,verbose){
+  res <- f2(ass,sav,Beta,verbose)
+	return(res)
+}
+
+myres <- myfun(a,x,Beta,verbose)
+
+#### look at result
+
+
+plot(a,a*Beta/(1+Beta),col="red")
+lines(a,myres)
+legend("bottomright",legend=c("true","approx"),lty=c(1,1),col=c("red","black"))
+
+##### How far is our solution from the closed form?
+
+print(max(a * Beta/(1+Beta) -myres))
+```
+
+You can see that in this instance the second approach clearly outperforms the first one. This is quite obvious, given the simple function we had to solve.
+
