@@ -8,26 +8,24 @@ It can be cery difficult to debug compiled code when linked within R. The goal o
 Let's write a simple RcppGSL function that performs a spline interpolation. The error will happen because we are going to ask for an evaluation that is outside the support.
 
 ```cpp
+#include<iostream>
+using namespace std;
 
 RcppExport SEXP cpp_lagrWithEffort( SEXP R_args){
   BEGIN_RCPP
 
-  Rcpp::NumericVector X   = args["X"];    // x values
-  Rcpp::NumericVector Y   = args["Y"];    // y values
+  bool crashit = Rcpp::as<bool>(R_args);
 
-  int nv = X.size();
+  if (crashit) {
+	  int x = 7;
+	  int *p = 0;
 
-  const gsl_interp_type *t = gsl_interp_cspline; 
-  l1_acc            = gsl_interp_accel_alloc ();
-  l1_spline         = gsl_spline_alloc (t, nv);
-
-  gsl_spline_init (l1_spline, K, V, nv);
-  const double v = gsl_spline_eval(l1_spline, mu, l1_acc);
-
-  gsl_spline_free         (params.w1_spline);
-  gsl_interp_accel_free   (params.w1_acc);
-
-  return(v)
+	  cout << "x = " << x;
+	  cout << "The pointer points to the value " << *p;
+  } else {
+      cout << "you are lucky." << endl;
+  }
+  return(NULL);
   
   END_RCPP
 }
@@ -71,4 +69,6 @@ break exit
 when the program crashes, I can display the stack by calling `backtrace`. It is important to remember compiling the code with the flags `-rdynamic -g` to get correct information. Later on for speed the code should be recompiled without the `-g` file and probably using the `-O3` flag.
 
 
+## an example debugging session
 
+tbd
