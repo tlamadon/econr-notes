@@ -15,8 +15,10 @@
     {"key":"DataTable"   ,"title":"Working with data table"},
     {"key":"IOexamples","title":"Using IO in C++"},
     {"key":"RandomGSL","title":"Random numbers with GSL"},
+    {"key":"OptimGSL","title":"Root finding and minimization in GSL"},
     {"key":"BlitzExample","title":"Using C++ tensors"},
-    {"key":"FortranAndR" ,"title":"Using Fortran"}
+    {"key":"FortranAndR" ,"title":"Using Fortran"},
+    {"key":"debuggingRCpp" ,"title":"Debugging Rcpp code"}
   ]
 },
 
