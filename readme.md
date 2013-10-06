@@ -1,4 +1,4 @@
-Projects that containts the sources to the book [Introduction to heterogenous agent economics with R/C++](http://tlamadon.github.io/econr-notes/DataTable.html). 
+Projects that containts the sources to the book [Introduction to heterogenous agent economics with R/C++](http://www.econr.org). 
 
 ## generate the content
 
