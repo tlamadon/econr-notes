@@ -1,4 +1,4 @@
-A quick note on generating random numbers in C++. I will jsut present how to use the gsl random number generator. See full details on the [GSL help page](http://www.gnu.org/software/gsl/manual/html_node/Random-Number-Distributions.html#Random-Number-Distributions).
+A quick note on generating random numbers in C++. I will just present how to use the gsl random number generator. See full details on the [GSL help page](http://www.gnu.org/software/gsl/manual/html_node/Random-Number-Distributions.html#Random-Number-Distributions).
 
 First one need to do the overall initialization by doing:
 

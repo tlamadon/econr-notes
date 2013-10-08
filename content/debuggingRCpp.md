@@ -1,4 +1,4 @@
-It can be cery difficult to debug compiled code when linked within R. The goal of this section is to show how this process can be made easier with the use of some of the c++ tool chain. We'll cover the following:
+It can be very difficult to debug compiled code when linked within R. The goal of this section is to show how this process can be made easier with the use of some of the c++ tool chain. We'll cover the following:
 
  - use `assert` to check catch issues in non production phase
  - use `gdb` to find where a crash happens
