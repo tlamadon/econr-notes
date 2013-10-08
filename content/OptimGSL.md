@@ -1,4 +1,4 @@
-A quick reminded on setting up and using root finding and minimization in RcppRgsl.
+A quick reminded on setting up and using root finding and minimization in RcppGSL.
 
 ## 1D root finding
 
