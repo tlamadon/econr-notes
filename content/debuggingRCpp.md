@@ -34,7 +34,7 @@ RcppExport SEXP cpp_lagrWithEffort( SEXP R_args){
 
 ## Using assert
 
-I recommend using the following simple macro. Copy the code snippet into an `assert.h` file that you can then include in yrou code.
+I recommend using the following simple macro. Copy the code snippet into an `assert.h` file that you can then include in your code.
 
 ```cpp
 #ifndef DEBUG
