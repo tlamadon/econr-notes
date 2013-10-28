@@ -74,7 +74,7 @@ struct my_f_params { double a; double beta; const gsl_interp *myint; gsl_interp_
 
 double my_obj( double x, void *p){
 
-	// define the paramter struct
+	// define the parameter struct
     struct my_f_params *params = (struct my_f_params *)p;
 	double a                   = (params->a);
 	double beta                = (params->beta);
