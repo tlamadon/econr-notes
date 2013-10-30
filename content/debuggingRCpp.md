@@ -60,14 +60,18 @@ Start R in debug mode using
 R -d gdb -e "source('tmp.r')"
 ```
 
-you will then get a prompt. Declare some breakpoints, for example here I catcth the call to `exit`:
+you will then get a prompt. Type `run` at the prompt. When the program crashes, you can display the stack by calling `backtrace`. 
+
+When you find out the segfault, declare some breakpoints right before it crashes, for example here I catcth the call to `exit`:
 
 ```sh
 break exit
 ```
+Then `run` again, the program will break at the breakpoint.  You can use `step` to step through the program or use `next` without stepping into functions. 
 
-when the program crashes, I can display the stack by calling `backtrace`. It is important to remember compiling the code with the flags `-rdynamic -g` to get correct information. Later on for speed the code should be recompiled without the `-g` file and probably using the `-O3` flag.
+It is important to remember compiling the code with the flags `-rdynamic -g` to get correct information. Later on for speed the code should be recompiled without the `-g` file and probably using the `-O3` flag.
 
+You can type `CXXFLAGS = -rdynamic -g` into `~/.R/Makevars`.
 
 ## an example debugging session
 
