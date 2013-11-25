@@ -12,8 +12,8 @@ anyone wrong here, we do want to illustrate that there are serious alternatives 
 pros and cons of each approach.
 
 The main motivation for this book lies in the fact that we think there is a shortage of books that help implementing solutions for computational economics. Beware that this book
-is **not** a substitute to any of the excellent existing contributions on computational economics, like Ken Judd's book,
-Adda and Cooper or Fackler and Miranda, to name but a few. However, we feel that there is space for a more hands on approach,
+is **not** a substitute to any of the excellent existing contributions on computational economics, like [Ken Judd's book](http://www.amazon.com/Numerical-Methods-Economics-Kenneth-Judd/dp/0262100711),
+[Adda and Cooper](http://mitpress.mit.edu/books/dynamic-economics) or [Fackler and Miranda](http://www.amazon.co.uk/Applied-Computational-Economics-Finance-Miranda/dp/0262633094), to name but a few. However, we feel that there is space for a more hands on approach,
 with actual working computer code instead of pseudo code illustrations. Economics students and researchers spend a lot of time
 *making things work*, many times on problems that others have solved before. We want to make a small contribution to alleviate
 this inefficiency.
