@@ -1,4 +1,4 @@
-It can be cery difficult to debug compiled code when linked within R. The goal of this section is to show how this process can be made easier with the use of some of the c++ tool chain. We'll cover the following:
+It can be very difficult to debug compiled code when linked within R. The goal of this section is to show how this process can be made easier with the use of some of the c++ tool chain. We'll cover the following:
 
  - use `assert` to check catch issues in non production phase
  - use `gdb` to find where a crash happens
@@ -34,7 +34,7 @@ RcppExport SEXP cpp_lagrWithEffort( SEXP R_args){
 
 ## Using assert
 
-I recommend using the following simple macro. Copy the code snippet into an `assert.h` file that you can then include in yrou code.
+I recommend using the following simple macro. Copy the code snippet into an `assert.h` file that you can then include in your code.
 
 ```cpp
 #ifndef DEBUG
@@ -60,14 +60,18 @@ Start R in debug mode using
 R -d gdb -e "source('tmp.r')"
 ```
 
-you will then get a prompt. Declare some breakpoints, for example here I catcth the call to `exit`:
+you will then get a prompt. Type `run` at the prompt. When the program crashes, you can display the stack by calling `backtrace`. 
+
+When you find out the segfault, declare some breakpoints right before it crashes, for example here I catcth the call to `exit`:
 
 ```sh
 break exit
 ```
+Then `run` again, the program will break at the breakpoint.  You can use `step` to step through the program or use `next` without stepping into functions. 
 
-when the program crashes, I can display the stack by calling `backtrace`. It is important to remember compiling the code with the flags `-rdynamic -g` to get correct information. Later on for speed the code should be recompiled without the `-g` file and probably using the `-O3` flag.
+It is important to remember compiling the code with the flags `-rdynamic -g` to get correct information. Later on for speed the code should be recompiled without the `-g` file and probably using the `-O3` flag.
 
+You can type `CXXFLAGS = -rdynamic -g` into `~/.R/Makevars`.
 
 ## an example debugging session
 
