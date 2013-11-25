@@ -107,7 +107,7 @@ double my_obj( double x, void *p){
 
 It's very important to always check the objective function. here's a code snippet that will print the value of the objective at different asset and savings states:
 
-```{r,tidy=FALSE}
+```{r,tidy=FALSE,warning=FALSE}
 src <- '
 NumericVector a(a_);	// a has the same memory address as a_
 NumericVector x(x_);
@@ -277,7 +277,7 @@ return wrap(R);
 
 #### compiling the C function
 
-```{r,tidy=FALSE}
+```{r,tidy=FALSE,warning=FALSE}
 f2=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric",verbose_="logical"),
 			   body=src2,plugin="RcppGSL",includes=inc)
 
@@ -369,7 +369,7 @@ double find_root(gsl_root_fsolver *s, gsl_function * F, double a, double b) {
 
 We again test our objective function. 
 
-```{r,tidy=FALSE}
+```{r,tidy=FALSE,warning=FALSE}
 src <- '
 NumericVector a(a_);	// a has the same memory address as a_
 NumericVector x(x_);
@@ -427,7 +427,7 @@ library(rgl)
 knit_hooks$set(rgl = hook_rgl)
 ```
 
-```{r,rgl=TRUE}
+```{r,rgl=TRUE,warning=FALSE}
 testf=cxxfunction(signature(a_="numeric",x_="numeric",beta_="numeric"),body=src,plugin="RcppGSL",includes=inc)
 
 # call the test 
@@ -442,7 +442,7 @@ view3d(theta=0,-70)
 
 ### Solve the optimization problem
 
-```{r,tidy=FALSE}
+```{r,tidy=FALSE,warning=FALSE}
 src2 <- '
 // map values from R
 NumericVector a(a_);
