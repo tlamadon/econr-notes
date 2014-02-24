@@ -49,3 +49,58 @@ A2 = array(120:60,c(2,5,6))
 f = cxxfunction(signature(A_="numeric",A2_="numeric"),body=src,plugin="Rcpp",includes=inc)
 all.equal(f(A,A2),A+A2)
 ```
+
+
+========================================================
+Using the RcppArmadillo library 
+========================================================
+
+The Armadillo C++ library provides vector, matrix and cube types. 
+We convert an R array to a cube in RcppArmadillo.
+
+First in the "arma.cpp" file
+```cpp
+// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
+
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+SEXP f(SEXP A_, SEXP A2_){  
+  NumericVector A(A_);
+  NumericVector A2(A2_);
+
+// read dimension attribute of R arrays
+  IntegerVector d1 = A.attr("dim");
+  IntegerVector d2 = A2.attr("dim");
+
+// create 2 cubes B and B2
+// supply contents of dim vectors manually
+  arma::cube B(A.begin(), d1[0], d1[1], d1[2], false);
+  arma::cube B2(A2.begin(),  d2[0], d2[1], d2[2], false);
+
+// do some arithmethic
+  arma::cube C(d1[0], d1[1], d1[2]);
+  C = B + B2;
+
+// copy the result back to B (which is a view of A, i.e. will contain the same data)
+  B = C;
+
+// return array
+  return wrap(A);
+} 
+```
+Then in the "arma.r" file
+
+```R
+require(Rcpp)
+require(RcppArmadillo)
+sourceCpp("arma.cpp")
+
+A = array(1:60,c(2,5,6))
+A2 = array(120:60,c(2,5,6))
+all.equal(f(A,A2),A+A2)
+```
+
+
+
