@@ -55,7 +55,7 @@ dd = dd[,{
   y[1] = y0
   u    = rnorm(l,sd=p$u_sd)
   for (t in 2:l) {
-    y[t] = p$rho * y[t-1] + f
+    y[t] = p$rho * y[t-1] + f + u[t]
   }
   list(y=y,t=1:l)
 },i]
@@ -86,7 +86,7 @@ dd$y.l1 = dd[J(i,t-1),y]$y
 dd
 ```
 
-The `J` function creates a data.table with the 2 columsn `i,j` coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use `-1` to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. 
+The `J` function creates a data.table with the 2 columns `i,j` coming from the wrapping data.table. It creates a running index that will go through the table. Then we can use `-1` to express that we want to shift this index by one. Any transformation can be performed at this point and one can go 4 periods before or after or anything. 
 
 
 ### Alternative approach: add lagged column by reference with `:=`
