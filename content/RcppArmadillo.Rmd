@@ -1,0 +1,12 @@
+Working with RcppArmadillo
+========================================================
+
+RcppArmadillo provides a very nice interface to the C++ matrix algebra library Armadillo
+
+```{r}
+library(inline)
+library(RcppArmadillo)
+body <- 'std::cout << "Armadillo version: " << arma::arma_version::as_string() << std::endl;'
+f = cxxfunction(sig=character(),body=body,plugin="RcppArmadillo")
+f()
+```
