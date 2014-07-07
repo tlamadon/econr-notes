@@ -60,7 +60,9 @@ Start R in debug mode using
 R -d gdb -e "source('tmp.r')"
 ```
 
-you will then get a prompt. Type `run` at the prompt. When the program crashes, you can display the stack by calling `backtrace`. 
+(Notice that on Mac OS Mavericks `gdb` is not available anymore. instead, there is the `llvm` version of gdb, called `lldb`. so you have to do `R -d lldb -e source('')`)
+
+This will start the debugger and you will get a prompt. Type `run` at the prompt, which launches either the file `tmp.r` in `R` (in case of gdb) or it launches `R` and you have to source from within R. When the program crashes, you can display the stack by calling `backtrace`. 
 
 When you find out the segfault, declare some breakpoints right before it crashes, for example here I catcth the call to `exit`:
 
@@ -73,6 +75,15 @@ It is important to remember compiling the code with the flags `-rdynamic -g` to 
 
 You can type `CXXFLAGS = -rdynamic -g` into `~/.R/Makevars`.
 
-## an example debugging session
+# Looking at the Core Dump
 
-tbd
+If your program crashes with a segmentation fault (or other) and produces a core dump, you can analyze this with `gdb`. you do
+
+```bash
+cd /your/Rpackage/src
+gdb YourRPackage.so /path/to/where/core.dump/is
+```
+
+that will load all definitions from your library (package) and print the line/function where the code crashed.
+
+
